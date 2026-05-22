@@ -9,12 +9,10 @@
 
 <link rel="icon" type="image/png" href="./favicon.png">
 
-<!-- SEO -->
 <meta name="title" content="Blue.tcc">
 <meta name="description" content="Modern Cyber Portfolio • Developer • Performance Engineer • Creator">
 <meta name="theme-color" content="#6c63ff">
 
-<!-- Open Graph / Facebook / Discord -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://bluetccth.github.io/ProfileMe/">
 <meta property="og:title" content="Blue.tcc">
@@ -29,18 +27,15 @@
 <meta property="og:site_name" content="Blue.tcc">
 <meta property="og:locale" content="Profile">
 
-<!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Blue.tcc">
 <meta name="twitter:description" content="Modern Cyber Portfolio • Developer • Performance Engineer • Creator">
 <meta name="twitter:image" content="https://bluetccth.github.io/ProfileMe/preview.png">
 
-<!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;700&display=swap" rel="stylesheet">
 
 <style>
   
-  /* ===== COMING SOON APPLE STYLE ===== */
 .coming-section{
   padding:6rem 6%;
   position:relative;
@@ -107,7 +102,6 @@
   font-size:.95rem;
 }
 
-/* FLOAT BUTTON */
 .contact-float-btn{
   margin-top:2rem;
   padding:.9rem 1.6rem;
@@ -143,7 +137,6 @@ body{
   overflow-x:hidden;min-height:100vh;cursor:none;
 }
 
-/* SCROLL PROGRESS */
 #scroll-bar{
   position:fixed;top:0;left:0;height:3px;width:0%;
   background:linear-gradient(90deg,var(--accent),var(--cyan),var(--pink));
@@ -151,7 +144,6 @@ body{
   transition:width .05s linear;
 }
 
-/* VIDEO */
 #bg-video{
   position:fixed;inset:0;width:100%;height:100%;
   object-fit:cover;z-index:-5;opacity:.15;
@@ -167,10 +159,8 @@ body::before{
   z-index:-3;pointer-events:none;
 }
 
-/* PARTICLES */
 #particles{position:fixed;inset:0;z-index:-2;pointer-events:none;}
 
-/* CURSOR */
 .cursor{
   width:16px;height:16px;
   border:2px solid var(--accent2);border-radius:50%;
@@ -186,7 +176,6 @@ body::before{
   pointer-events:none;z-index:999999;will-change:transform;
 }
 
-/* LOADER */
 #loader{
   position:fixed;inset:0;background:#030308;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -210,7 +199,6 @@ body::before{
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 .loader-sub{margin-top:.5rem;color:var(--muted);font-size:.78rem;letter-spacing:.15em;text-transform:uppercase;}
 
-/* NAV */
 nav{
   position:fixed;top:0;left:0;right:0;z-index:1000;
   display:flex;justify-content:space-between;align-items:center;
@@ -236,7 +224,7 @@ nav.scrolled{background:rgba(3,3,8,.92);}
 .nav-links a.active::after{
   transform:scaleX(1);
 }
-/* HAMBURGER */
+
 .hamburger{
   display:none;flex-direction:column;gap:5px;
   cursor:pointer;padding:6px;background:none;border:none;
@@ -274,7 +262,6 @@ nav.scrolled{background:rgba(3,3,8,.92);}
     width .25s ease;
 }
 
-/* ตำแหน่งเริ่มต้น */
 .hamburger span:nth-child(1){
   transform:translateY(-7px);
 }
@@ -287,7 +274,6 @@ nav.scrolled{background:rgba(3,3,8,.92);}
   transform:translateY(7px);
 }
 
-/* ตอน active */
 .hamburger.active span:nth-child(1){
   transform:rotate(45deg);
 }
@@ -300,7 +286,7 @@ nav.scrolled{background:rgba(3,3,8,.92);}
 .hamburger.active span:nth-child(3){
   transform:rotate(-45deg);
 }
-/* MOBILE DRAWER */
+  
 .mobile-nav{
   position:fixed;inset:0;
   background:rgba(3,3,8,.97);backdrop-filter:blur(20px);
@@ -316,11 +302,9 @@ nav.scrolled{background:rgba(3,3,8,.92);}
 }
 .mobile-nav a:hover{color:var(--accent2);}
 
-/* SECTIONS */
 section{position:relative;z-index:2;}
 .container{width:min(92%,1100px);margin:auto;}
 
-/* HERO */
 #home{min-height:100vh;display:flex;align-items:center;padding:8rem 6% 5rem;}
 .hero-inner{display:flex;align-items:center;gap:4rem;flex-wrap:wrap;}
 .avatar-wrap{width:200px;height:200px;position:relative;flex-shrink:0;}
@@ -410,7 +394,6 @@ section{position:relative;z-index:2;}
 .stat-label{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:none;}}
 
-/* SECTION HEADER */
 .sec-header{text-align:center;margin-bottom:3.5rem;}
 .sec-label{
   display:inline-block;margin-bottom:1rem;padding:.3rem 1rem;
@@ -424,7 +407,6 @@ section{position:relative;z-index:2;}
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
 }
 
-/* GLASS */
 .glass{
   background:rgba(255,255,255,.05);
   border:1px solid rgba(255,255,255,.08);
@@ -433,7 +415,6 @@ section{position:relative;z-index:2;}
   border-radius:24px;
 }
 
-/* ABOUT */
 #about,#skills,#portfolio,#contact{padding:6rem 6%;}
 .about-card{padding:2.5rem;position:relative;overflow:hidden;}
 .about-card::before{
@@ -443,7 +424,6 @@ section{position:relative;z-index:2;}
 .about-card p{line-height:2;color:var(--muted);font-size:1.02rem;}
 .about-card strong{color:var(--text);}
 
-/* SKILLS */
 .skills-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.3rem;}
 .skill-card{padding:1.8rem 1.5rem;transition:.35s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden;}
 .skill-card::before{
@@ -469,7 +449,6 @@ section{position:relative;z-index:2;}
 @keyframes barGlow{0%,100%{opacity:.4;}50%{opacity:1;}}
 .skill-pct{margin-top:.6rem;text-align:right;color:var(--muted);font-size:.82rem;}
 
-/* PORTFOLIO */
 .portfolio-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.8rem;}
 .proj-card{overflow:hidden;border-radius:20px;transition:.3s cubic-bezier(.4,0,.2,1);transform-style:preserve-3d;position:relative;}
 .proj-card:hover{box-shadow:0 0 40px rgba(108,99,255,.3);}
@@ -487,7 +466,6 @@ section{position:relative;z-index:2;}
   overflow:hidden;
   position:relative;
 
-  /* เพิ่มระยะขอบ */
   padding:14px;
 }
 
@@ -496,7 +474,6 @@ section{position:relative;z-index:2;}
   height:100%;
   object-fit:cover;
 
-  /* ทำให้รูปมน */
   border-radius:14px;
 
   transition:transform .6s cubic-bezier(.4,0,.2,1);
@@ -537,7 +514,6 @@ section{position:relative;z-index:2;}
 .proj-link{text-decoration:none;color:var(--cyan);font-weight:600;font-size:.9rem;display:inline-flex;align-items:center;gap:.4rem;transition:gap .2s;}
 .proj-link:hover{gap:.8rem;}
 
-/* CONTACT */
 .contact-box{padding:3rem;text-align:center;position:relative;overflow:hidden;}
 .contact-box::before{
   content:'';position:absolute;top:0;left:0;right:0;height:1px;
@@ -561,24 +537,20 @@ section{position:relative;z-index:2;}
   box-shadow:0 0 25px rgba(108,99,255,.25);border-color:rgba(108,99,255,.4);
 }
 
-/* FOOTER */
 footer{
   padding:2rem;text-align:center;color:var(--muted);font-size:.85rem;
   border-top:1px solid rgba(255,255,255,.05);position:relative;z-index:2;
 }
 
-/* AMBIENT GLOW */
 .glow-orb{position:fixed;border-radius:50%;pointer-events:none;filter:blur(100px);z-index:0;}
 .glow-1{width:600px;height:600px;background:rgba(108,99,255,.12);top:-200px;left:-200px;animation:orbFloat 12s ease-in-out infinite;}
 .glow-2{width:400px;height:400px;background:rgba(34,211,238,.08);bottom:0;right:-100px;animation:orbFloat 9s ease-in-out infinite reverse;}
 .glow-3{width:300px;height:300px;background:rgba(244,114,182,.07);top:50%;left:50%;animation:orbFloat 15s ease-in-out infinite 3s;}
 @keyframes orbFloat{0%,100%{transform:translate(0,0);}33%{transform:translate(30px,-30px);}66%{transform:translate(-20px,20px);}}
 
-/* REVEAL */
 .reveal{opacity:0;transform:translateY(40px);transition:.8s cubic-bezier(.4,0,.2,1);}
 .reveal.visible{opacity:1;transform:none;}
 
-/* MOBILE */
 @media(max-width:768px){
   body{cursor:default;}
   .cursor,.cursor-dot{display:none !important;}
@@ -621,14 +593,12 @@ footer{
   filter: drop-shadow(0 0 0px transparent);
 }
 
-/* ลอยขึ้นลงช้า ๆ */
 @keyframes floatY {
   0%   { transform: translateY(0px); }
   50%  { transform: translateY(-10px); }
   100% { transform: translateY(0px); }
 }
 
-/* hover glow */
 .ui-icon-float:hover {
   transform: translateY(-10px) scale(1.15);
 
@@ -647,25 +617,21 @@ footer{
 <div class="glow-orb glow-2"></div>
 <div class="glow-orb glow-3"></div>
 
-<!-- LOADER -->
 <div id="loader">
   <div class="loader-ring"></div>
   <div class="loader-text">Blue.tcc</div>
   <div class="loader-sub">Loading portfolio...</div>
 </div>
 
-<!-- CURSOR -->
 <div class="cursor" id="cursor"></div>
 <div class="cursor-dot" id="cursor-dot"></div>
 
-<!-- VIDEO BG -->
 <video id="bg-video" autoplay muted loop playsinline webkit-playsinline preload="metadata">
   <source src="bg.mp4" type="video/mp4">
 </video>
 
 <canvas id="particles"></canvas>
 
-<!-- NAV -->
 <nav id="nav">
   <a href="#home" class="logo">Blue.tcc</a>
   <ul class="nav-links">
@@ -688,7 +654,6 @@ footer{
   <a href="#contact" class="mobile-link">ติดต่อ</a>
 </div>
 
-<!-- HERO -->
 <section id="home">
 <div class="container">
 <div class="hero-inner">
@@ -734,7 +699,6 @@ footer{
 </div>
 </section>
 
-<!-- ABOUT -->
 <section id="about">
 <div class="container">
   <div class="sec-header reveal">
@@ -747,7 +711,6 @@ footer{
 </div>
 </section>
 
-<!-- SKILLS -->
 <section id="skills">
 <div class="container">
   <div class="sec-header reveal">
@@ -789,7 +752,6 @@ footer{
 </div>
 </section>
 
-<!-- PORTFOLIO -->
 <section id="portfolio">
 <div class="container">
   <div class="sec-header reveal">
@@ -833,7 +795,6 @@ footer{
 </div>
 </section>
 
-<!-- COMING SOON SECTION -->
 <section id="contact" 
  <div class="coming-section">
   <div class="container">
@@ -887,17 +848,15 @@ footer{
  </div>
    <footer>© 2026 Blue.tcc — Made with 💜</footer>
 <script>
-/* LOADER */
+
 window.addEventListener('load',()=>{setTimeout(()=>{document.getElementById('loader').classList.add('hide');},1400);});
 
-/* SCROLL PROGRESS + NAV */
 window.addEventListener('scroll',()=>{
   const pct=window.scrollY/(document.body.scrollHeight-window.innerHeight)*100;
   document.getElementById('scroll-bar').style.width=pct+'%';
   document.getElementById('nav').classList.toggle('scrolled',window.scrollY>60);
 },{passive:true});
 
-/* HAMBURGER */
 const ham=document.getElementById('hamburger');
 const mNav=document.getElementById('mobile-nav');
 ham.addEventListener('click',()=>{
@@ -912,7 +871,6 @@ document.querySelectorAll('.mobile-link').forEach(a=>{
   });
 });
 
-/* CURSOR — desktop only */
 const cursor=document.getElementById('cursor');
 const dot=document.getElementById('cursor-dot');
 if(window.matchMedia('(hover:hover) and (pointer:fine)').matches){
@@ -930,7 +888,6 @@ if(window.matchMedia('(hover:hover) and (pointer:fine)').matches){
   document.addEventListener('mouseenter',()=>{cursor.style.opacity='1';dot.style.opacity='1';});
 }
 
-/* PARTICLES */
 const canvas=document.getElementById('particles');
 const ctx=canvas.getContext('2d');
 let W,H,pts=[];
@@ -959,23 +916,19 @@ function drawLines(){
 }
 function animP(){ctx.clearRect(0,0,W,H);pts.forEach(p=>{p.update();p.draw();});drawLines();requestAnimationFrame(animP);}
 animP();
-/* repel mouse/touch */
+  
 document.addEventListener('mousemove',e=>{pts.forEach(p=>{const dx=e.clientX-p.x,dy=e.clientY-p.y,d=Math.sqrt(dx*dx+dy*dy);if(d<130){p.x-=dx*.009;p.y-=dy*.009;}});},{passive:true});
 document.addEventListener('touchmove',e=>{const tx=e.touches[0].clientX,ty=e.touches[0].clientY;pts.forEach(p=>{const dx=tx-p.x,dy=ty-p.y,d=Math.sqrt(dx*dx+dy*dy);if(d<100){p.x-=dx*.01;p.y-=dy*.01;}});},{passive:true});
 
-/* REVEAL */
 const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);}});},{threshold:.12});
 document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
 
-/* SKILL BARS */
 const sObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const bar=e.target.querySelector('.skill-bar');if(bar)setTimeout(()=>{bar.style.width=e.target.dataset.pct+'%';},150);sObs.unobserve(e.target);}});},{threshold:.3});
 document.querySelectorAll('.skill-card').forEach(el=>sObs.observe(el));
 
-/* COUNTERS */
 const cObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){const t=+e.target.dataset.target;let c=0;const s=t/30;const iv=setInterval(()=>{c+=s;if(c>=t){c=t;clearInterval(iv);}e.target.textContent=Math.floor(c);},40);cObs.unobserve(e.target);}});},{threshold:.5});
 document.querySelectorAll('.stat-num').forEach(el=>cObs.observe(el));
 
-/* 3D TILT — desktop only */
 if(window.matchMedia('(hover:hover)').matches){
   document.querySelectorAll('.proj-card').forEach(card=>{
     card.addEventListener('mousemove',e=>{
@@ -988,7 +941,6 @@ if(window.matchMedia('(hover:hover)').matches){
   });
 }
 
-/* TYPING */
 const phrases=['System Optimizer','Automation Builder','UI Designer','Windows Engineer'];
 let pi=0,ci=0,del=false;
 const typeEl=document.getElementById('hero-type');
@@ -1000,12 +952,10 @@ function type(){
 }
 setTimeout(type,2000);
 
-/* PARALLAX VIDEO */
 window.addEventListener('scroll',()=>{
   document.getElementById('bg-video').style.transform=`scale(1.05) translateY(${window.scrollY*.04}px)`;
 },{passive:true});
 
-/* NAV ACTIVE */
 const secs = document.querySelectorAll('section[id]');
 const nls = document.querySelectorAll('.nav-links a');
 
@@ -1013,12 +963,10 @@ window.addEventListener('scroll', () => {
 
   let cur = '';
 
-  // ตำแหน่งที่ใช้ตรวจ section
   const scrollPos = window.scrollY + window.innerHeight / 3;
 
   secs.forEach(sec => {
 
-    // เช็คว่าอยู่ใน section ไหน
     if (
       scrollPos >= sec.offsetTop &&
       scrollPos < sec.offsetTop + sec.offsetHeight
@@ -1028,7 +976,6 @@ window.addEventListener('scroll', () => {
 
   });
 
-  // เปลี่ยนสีเมนู
   nls.forEach(a => {
 
     if (a.getAttribute('href') === '#' + cur) {
