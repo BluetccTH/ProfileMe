@@ -5,7 +5,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-<title>Blue.tcc — Modern Cyber Portfolio</title>
+<title>Blue.tcc</title>
 
 <link rel="icon" type="image/png" href="./favicon.png">
 
@@ -39,6 +39,91 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;700&display=swap" rel="stylesheet">
 
 <style>
+  
+  /* ===== COMING SOON APPLE STYLE ===== */
+.coming-section{
+  padding:6rem 6%;
+  position:relative;
+}
+
+.coming-card{
+  text-align:center;
+  padding:4rem 2rem;
+  position:relative;
+  overflow:hidden;
+}
+
+.coming-badge{
+  display:inline-block;
+  font-size:.75rem;
+  letter-spacing:.2em;
+  color:var(--cyan);
+  margin-bottom:1rem;
+  opacity:.8;
+}
+
+.coming-title{
+  font-size:2.5rem;
+  font-weight:700;
+  background:linear-gradient(90deg,var(--text),var(--accent2));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+
+  opacity:0;
+  transform:translateY(20px);
+  animation:fadeUp .8s ease forwards;
+}
+
+.coming-sub{
+  margin-top:1rem;
+  color:var(--muted);
+  opacity:0;
+  animation:fadeUp .8s .2s ease forwards;
+}
+
+.coming-line{
+  width:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  margin:2rem auto;
+  animation:lineGrow 1.2s .4s ease forwards;
+}
+
+@keyframes lineGrow{
+  to{width:60%;}
+}
+
+.coming-brand{
+  font-size:1.8rem;
+  font-weight:800;
+  letter-spacing:.3em;
+  margin-top:1rem;
+  opacity:.6;
+}
+
+.coming-contact{
+  margin-top:1rem;
+  color:var(--accent2);
+  font-size:.95rem;
+}
+
+/* FLOAT BUTTON */
+.contact-float-btn{
+  margin-top:2rem;
+  padding:.9rem 1.6rem;
+  border:none;
+  border-radius:999px;
+  background:linear-gradient(135deg,var(--accent),var(--cyan));
+  color:white;
+  font-weight:600;
+  cursor:pointer;
+  transition:.3s;
+}
+
+.contact-float-btn:hover{
+  transform:translateY(-3px);
+  box-shadow:0 0 30px rgba(108,99,255,.4);
+}
 
 :root{
   --bg:#030308;
@@ -521,6 +606,38 @@ footer{
   .avatar-wrap{width:160px;height:160px;}
   .hero-name{font-size:1.8rem;}
 }
+.ui-icon-float {
+  width: 60px;
+  height: 60px;
+
+  color: #f3eff6;
+
+  cursor: pointer;
+  display: inline-block;
+
+  animation: floatY 4.5s ease-in-out infinite;
+
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 0 0px transparent);
+}
+
+/* ลอยขึ้นลงช้า ๆ */
+@keyframes floatY {
+  0%   { transform: translateY(0px); }
+  50%  { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+/* hover glow */
+.ui-icon-float:hover {
+  transform: translateY(-10px) scale(1.15);
+
+  color: #ffffff;
+
+  filter:
+    drop-shadow(0 0 8px rgba(180, 120, 255, 0.9))
+    drop-shadow(0 0 18px rgba(120, 200, 255, 0.6));
+}
 </style>
 </head>
 <body>
@@ -552,6 +669,7 @@ footer{
 <nav id="nav">
   <a href="#home" class="logo">Blue.tcc</a>
   <ul class="nav-links">
+    <li><a href="#home">หน้าแรก</a></li>
     <li><a href="#about">เกี่ยวกับ</a></li>
     <li><a href="#skills">ทักษะ</a></li>
     <li><a href="#portfolio">ผลงาน</a></li>
@@ -563,6 +681,7 @@ footer{
 </nav>
 
 <div class="mobile-nav" id="mobile-nav">
+  <a href="#home" class="mobile-link">หน้าแรก</a>
   <a href="#about" class="mobile-link">เกี่ยวกับ</a>
   <a href="#skills" class="mobile-link">ทักษะ</a>
   <a href="#portfolio" class="mobile-link">ผลงาน</a>
@@ -584,12 +703,12 @@ footer{
   <div class="hero-text">
     <div class="hero-badges">
       <span class="hero-badge">⚡ Developer</span>
-      <span class="hero-badge">🚀 Performance Eng.</span>
-      <span class="hero-badge">🎨 Creator</span>
+      <span class="hero-badge">🚀 Performance Engineer</span>
+      <span class="hero-badge">🎨 UI/UX Designer</span>
     </div>
     <h1 class="hero-name">
-      นาย <span class="glitch" data-text="ชิษณุพงศ์">ชิษณุพงศ์</span><br>
-      <span style="font-size:clamp(1.4rem,3.5vw,2.5rem);opacity:.85">เรณูหอม</span>
+      Mr. <span class="glitch" data-text="Blue">Blue</span><br>
+      <span style="font-size:clamp(1.4rem,3.5vw,2.5rem);opacity:.85"></span>
     </h1>
     <p class="hero-sub">
       นักพัฒนาซอฟต์แวร์ อายุ 17 ปี — เรียนรู้ด้วยตนเอง<br>
@@ -632,7 +751,7 @@ footer{
 <section id="skills">
 <div class="container">
   <div class="sec-header reveal">
-    <span class="sec-label">Skills</span>
+    <span class="sec-label">Fluent languages</span>
     <h2 class="sec-title">ภาษาที่ถนัด</h2>
   </div>
   <div class="skills-grid">
@@ -640,31 +759,31 @@ footer{
       <div class="skill-icon">🌐</div>
       <div class="skill-name">HTML5</div>
       <div class="skill-bar-bg"><div class="skill-bar" style="background:linear-gradient(90deg,#ff512f,#dd2476)"></div></div>
-      <div class="skill-pct">88%</div>
+      <div class="skill-pct">96%</div>
     </div>
     <div class="skill-card glass reveal" data-pct="80">
       <div class="skill-icon">🎨</div>
       <div class="skill-name">CSS3</div>
       <div class="skill-bar-bg"><div class="skill-bar" style="background:linear-gradient(90deg,#2193b0,#6dd5ed)"></div></div>
-      <div class="skill-pct">80%</div>
+      <div class="skill-pct">46%</div>
     </div>
     <div class="skill-card glass reveal" data-pct="72">
       <div class="skill-icon">⚡</div>
       <div class="skill-name">JavaScript</div>
       <div class="skill-bar-bg"><div class="skill-bar" style="background:linear-gradient(90deg,#f7df1e,#f0a00e)"></div></div>
-      <div class="skill-pct">72%</div>
+      <div class="skill-pct">50%</div>
     </div>
     <div class="skill-card glass reveal" data-pct="65">
       <div class="skill-icon">⚙️</div>
       <div class="skill-name">C</div>
       <div class="skill-bar-bg"><div class="skill-bar" style="background:linear-gradient(90deg,#6c63ff,#a78bfa)"></div></div>
-      <div class="skill-pct">65%</div>
+      <div class="skill-pct">25%</div>
     </div>
     <div class="skill-card glass reveal" data-pct="92">
       <div class="skill-icon">🤖</div>
       <div class="skill-name">AutoHotkey</div>
       <div class="skill-bar-bg"><div class="skill-bar" style="background:linear-gradient(90deg,#00c6ff,#0072ff)"></div></div>
-      <div class="skill-pct">92%</div>
+      <div class="skill-pct">80%</div>
     </div>
   </div>
 </div>
@@ -674,7 +793,7 @@ footer{
 <section id="portfolio">
 <div class="container">
   <div class="sec-header reveal">
-    <span class="sec-label">Portfolio</span>
+    <span class="sec-label">Works</span>
     <h2 class="sec-title">ผลงาน</h2>
   </div>
   <div class="portfolio-grid">
@@ -714,28 +833,59 @@ footer{
 </div>
 </section>
 
-<!-- CONTACT -->
-<section id="contact">
-<div class="container">
-  <div class="sec-header reveal">
-    <span class="sec-label">Contact</span>
-    <h2 class="sec-title">ติดต่อฉัน</h2>
-  </div>
-  <div class="contact-box glass reveal">
-    <h2>มาทำงานร่วมกัน 🚀</h2>
-    <p>สนใจพูดคุยหรือร่วมงาน สามารถติดต่อได้ทุกช่องทาง</p>
-    <div class="contact-links">
-      <a href="https://mail.google.com/mail/?view=cm&fs=1&to=kaxranuhom@gmail.com" target="_blank" class="contact-item">📧 Email</a>
-      <a href="https://www.facebook.com/kaxxch/" target="_blank" class="contact-item">📘 Facebook</a>
-      <a href="https://www.instagram.com/bluesjii/" target="_blank" class="contact-item">📸 Instagram</a>
-      <a href="https://discord.gg/WTYgx6CPeh" target="_blank" class="contact-item">🎮 Discord</a>
+<!-- COMING SOON SECTION -->
+<section id="contact" 
+ <div class="coming-section">
+  <div class="container">
+    <div class="coming-card glass reveal">
+
+      <svg class="ui-icon-float" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <mask id="star-gap">
+      <rect width="100" height="100" fill="white"></rect>
+      <line x1="0" y1="0" x2="100" y2="100" stroke="black" stroke-width="0"></line>
+    </mask>
+  </defs>
+
+  <path
+    d="M50 0 Q50 50 100 50 Q50 50 50 100 Q50 50 0 50 Q50 50 50 0 Z"
+    fill="currentColor"
+    mask="url(#star-gap)"
+  />
+</svg>
+
+      <h2 class="coming-title">
+        Coming Soon...
+      </h2>
+
+      <p class="coming-sub">
+        This section is under development.
+      </p>
+
+      <div class="coming-line"></div>
+
+      <div class="coming-brand">
+        BLUE.TCC
+      </div>
+      </div>
     </div>
   </div>
-</div>
 </section>
+         <div class="contact-links">
+          <div class="contact-links"></div>
+           <a href="https://mail.google.com/mail/?view=cm&fs=1&to=kaxranuhom@gmail.com" target="_blank" class="contact-item">kaxranuhom@gmail.com</a>
+         <div class="contact-links"></div>
+           <a href="https://www.facebook.com/kaxxch/" target="_blank" class="contact-item"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-facebook" viewBox="0 0 16 16">
+  <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951"/></svg></a>
+           <a href="https://www.instagram.com/bluesjii/" target="_blank" class="contact-item"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" class="cursor-on-hover"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" class="cursor-on-hover"></path></svg></a>
+           <a href="https://discord.gg/WTYgx6CPeh" target="_blank" class="contact-item"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" class="cursor-on-hover"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z" class="cursor-on-hover"></path></svg></a>
+      </div>
 
-<footer>© 2026 Blue.tcc — Made with 💜</footer>
-
+    </div>
+  </div>
+</section>
+ </div>
+   <footer>© 2026 Blue.tcc — Made with 💜</footer>
 <script>
 /* LOADER */
 window.addEventListener('load',()=>{setTimeout(()=>{document.getElementById('loader').classList.add('hide');},1400);});
