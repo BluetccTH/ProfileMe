@@ -637,7 +637,8 @@ footer{position:relative;z-index:2;overflow:hidden;}
 <div id="scroll-bar"></div>
 
 <div class="background-effects">
-  <video id="bg-video" autoplay muted loop playsinline preload="metadata">
+  <!-- ✅ แก้แล้ว: preload="auto" + webkit-playsinline + x5-playsinline -->
+  <video id="bg-video" autoplay muted loop playsinline preload="auto" webkit-playsinline x5-playsinline>
     <source src="background.mp4" type="video/mp4">
   </video>
   <div class="nebula"></div>
@@ -1143,6 +1144,22 @@ window.addEventListener('scroll', () => {
   secs.forEach(s => { if (sp >= s.offsetTop && sp < s.offsetTop + s.offsetHeight) cur = s.id; });
   nls.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + cur));
 }, { passive: true });
+
+/* ══ FORCE VIDEO PLAY — iOS / Android fix ✅ ══ */
+(function () {
+  const vid = document.getElementById('bg-video');
+  if (!vid) return;
+
+  function tryPlay() {
+    vid.muted = true;
+    vid.play().catch(() => {});
+  }
+
+  tryPlay();
+  document.addEventListener('touchstart', tryPlay, { once: true, passive: true });
+  document.addEventListener('click',      tryPlay, { once: true });
+  vid.addEventListener('error', () => { vid.style.display = 'none'; });
+})();
 </script>
 </body>
 </html>
