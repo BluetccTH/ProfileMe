@@ -165,18 +165,136 @@ nav.scrolled{background:rgba(3,3,8,.88);}
 .hamburger.active span:nth-child(3){transform:rotate(-45deg);}
 
 .mobile-nav{
-  position:fixed;inset:0;
-  background:rgba(3,3,8,.97);backdrop-filter:blur(24px);
+  position:fixed;
+  inset:0;
+  background:rgba(3,3,8,.18);
+  backdrop-filter:blur(24px);
   z-index:999;
-  display:none;flex-direction:column;align-items:center;justify-content:center;gap:2.8rem;
-  opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;
+
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2rem;
+
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+
+  transition:.35s;
 }
-.mobile-nav.open{opacity:1;visibility:visible;}
-.mobile-nav a{
-  text-decoration:none;color:var(--text);
-  font-size:1.9rem;font-weight:700;letter-spacing:.04em;transition:.2s;
+
+.mobile-nav.open{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
 }
-.mobile-nav a:hover{color:var(--accent2);}
+
+.mobile-link{
+  position:relative;
+
+  display:flex;
+  align-items:center;
+  gap:.9rem;
+
+  padding:1rem 1.6rem;
+  min-width:240px;
+
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:18px;
+
+  background:rgba(255,255,255,.03);
+
+  color:#cfffff;
+  text-decoration:none;
+
+  font-size:1.2rem;
+  font-weight:700;
+  letter-spacing:.03em;
+
+  overflow:hidden;
+
+  transform:translateY(40px) scale(.9);
+  opacity:0;
+
+  transition:
+    transform .45s cubic-bezier(.2,.8,.2,1),
+    opacity .45s,
+    border-color .3s,
+    background .3s,
+    box-shadow .3s;
+}
+
+/* stagger animation */
+.mobile-nav.open .mobile-link{
+  opacity:1;
+  transform:translateY(0) scale(1);
+}
+
+.mobile-nav.open .mobile-link:nth-child(1){transition-delay:.05s;}
+.mobile-nav.open .mobile-link:nth-child(2){transition-delay:.1s;}
+.mobile-nav.open .mobile-link:nth-child(3){transition-delay:.15s;}
+.mobile-nav.open .mobile-link:nth-child(4){transition-delay:.2s;}
+.mobile-nav.open .mobile-link:nth-child(5){transition-delay:.25s;}
+.mobile-nav.open .mobile-link:nth-child(6){transition-delay:.3s;}
+
+.mobile-link::before{
+  content:"";
+  position:absolute;
+  inset:0;
+
+  background:
+    linear-gradient(
+      120deg,
+      transparent,
+      rgba(120,255,255,.12),
+      transparent
+    );
+
+  transform:translateX(-120%);
+  transition:1s;
+}
+
+.mobile-link:hover::before{
+  transform:translateX(120%);
+}
+
+.mobile-link:hover{
+  border-color:rgba(120,255,255,.35);
+  background:rgba(120,255,255,.06);
+
+  box-shadow:
+    0 0 18px rgba(120,255,255,.14),
+    inset 0 0 18px rgba(120,255,255,.06);
+
+  transform:translateY(-4px) scale(1.03);
+}
+
+.mobile-link svg{
+  width:24px;
+  height:24px;
+
+  stroke:currentColor;
+  stroke-width:1.8;
+
+  filter:drop-shadow(0 0 10px rgba(120, 152, 255, 0.45));
+
+  animation:floatIcon 3s ease-in-out infinite;
+}
+
+.mobile-link span{
+  position:relative;
+  z-index:2;
+}
+
+@keyframes floatIcon{
+  0%,100%{
+    transform:translateY(0px);
+  }
+  50%{
+    transform:translateY(-4px);
+  }
+}
 
 /* ── SHARED ── */
 section,footer{position:relative;z-index:2;}
@@ -220,11 +338,11 @@ section,footer{position:relative;z-index:2;}
 .glitch:hover::before{content:attr(data-text);position:absolute;top:0;left:0;background:linear-gradient(100deg,var(--accent2),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;clip-path:polygon(0 20%,100% 20%,100% 40%,0 40%);transform:translate(-3px,0);animation:glitch1 .3s ease;opacity:.9;}
 @keyframes glitch1{0%,100%{opacity:0;}50%{opacity:.9;}}
 .hero-sub{color:var(--muted);line-height:1.75;margin-bottom:1rem;font-size:1rem;animation:fadeUp .7s .2s ease both;}
-.hero-type{color:var(--cyan);font-weight:500;border-right:1.5px solid var(--cyan);padding-right:2px;animation:blink 1s step-end infinite;}
+.hero-type{color:rgb(0, 255, 255);font-weight:500;border-right:1.5px solid var(--cyan);padding-right:2px;animation:blink 1s step-end infinite;}
 @keyframes blink{0%,100%{border-color:var(--cyan);}50%{border-color:transparent;}}
 .hero-desc{color:var(--muted);font-size:.9rem;line-height:1.8;padding-left:1rem;border-left:1.5px solid rgba(108,99,255,.4);margin-bottom:1.8rem;font-style:italic;animation:fadeUp .7s .3s ease both;}
 .btn-group{display:flex;gap:.85rem;flex-wrap:wrap;animation:fadeUp .7s .4s ease both;}
-.btn{text-decoration:none;color:white;padding:.75rem 1.5rem;border-radius:10px;font-family:var(--font);font-size:.9rem;font-weight:600;display:inline-flex;align-items:center;gap:.45rem;position:relative;overflow:hidden;border:none;cursor:pointer;transition:transform .22s,box-shadow .22s;}
+.btn{text-decoration:none;color:rgb(255, 255, 255);padding:.75rem 1.5rem;border-radius:10px;font-family:var(--font);font-size:.9rem;font-weight:600;display:inline-flex;align-items:center;gap:.45rem;position:relative;overflow:hidden;border:none;cursor:pointer;transition:transform .22s,box-shadow .22s;}
 .btn::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);transform:translateX(-100%);transition:.5s;}
 .btn:hover::before{transform:translateX(100%);}
 .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 0 18px rgba(108,99,255,.3);}
@@ -238,7 +356,7 @@ section,footer{position:relative;z-index:2;}
 .stat-label{font-size:.73rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:.1rem;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(26px);}to{opacity:1;transform:none;}}
 
-/* ── PROFILE CARD (แทน Live2D) ── */
+/* ── PROFILE CARD ── */
 .profile-wrap{
   flex:0 0 380px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -312,7 +430,7 @@ section,footer{position:relative;z-index:2;}
 }
 .profile-dot{
   width:7px;height:7px;border-radius:50%;
-  background:#4ade80;box-shadow:0 0 6px #4ade80;
+  background:#4ade80;box-shadow:0 0 6px #4aded7;
   animation:dotBlink 2s ease-in-out infinite;
 }
 @keyframes dotBlink{0%,100%{opacity:1;}50%{opacity:.3;}}
@@ -417,8 +535,10 @@ footer{position:relative;z-index:2;overflow:hidden;}
 .footer-links a:hover::before{opacity:1;transform:translateX(0);}
 .footer-status-item{display:flex;align-items:center;gap:.6rem;color:var(--muted);font-size:.85rem;margin-bottom:.8rem;}
 .footer-status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.footer-status-dot.green{background:#4ade80;box-shadow:0 0 6px #4ade80;animation:dotBlink 2s ease-in-out infinite;}
-.footer-status-dot.yellow{background:#fbbf24;box-shadow:0 0 6px #fbbf24;}
+.footer-status-dot.green{background:linear-gradient(135deg,#56fb24,#24fbe9);box-shadow:0 0 6px #56fb24,0 0 12px #24fbe9,0 0 20px rgba(36, 244, 251, 0.7);animation:dotBlink 2s ease-in-out infinite;}
+.footer-status-dot.yellow{background:linear-gradient(135deg,#fbe524,#ff7300);box-shadow:0 0 6px #fbe524,0 0 12px #ff7300,0 0 20px rgba(255, 115, 0, 0.7);animation:dotBlink 2s ease-in-out infinite;}
+.footer-status-dot.red{background:linear-gradient(135deg,#fb2424,#fb2488);box-shadow:0 0 6px #fb2424,0 0 12px #fb2488,0 0 20px rgba(201, 36, 251, 0.7);animation:dotBlink 2s ease-in-out infinite;}
+.footer-status-dot.ComingSoon{background:linear-gradient(135deg,#fb2424,#fbbf24);box-shadow:0 0 6px #fb2424,0 0 12px #fbbf24,0 0 20px rgba(251,191,36,.7);animation:dotBlink 2s ease-in-out infinite;}
 .footer-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.07) 30%,rgba(255,255,255,.07) 70%,transparent);margin-bottom:1.8rem;position:relative;z-index:1;}
 .footer-bottom{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;position:relative;z-index:1;}
 .footer-copy{color:var(--muted);font-size:.8rem;display:flex;align-items:center;gap:.4rem;}
@@ -469,7 +589,7 @@ footer{position:relative;z-index:2;overflow:hidden;}
   display: flex;
   flex-wrap: wrap;
   gap: .55rem;
-  margin-bottom: 1.6rem;   /* ลงมาอีกนิด */
+  margin-bottom: 1.6rem;
   margin-top: .4rem;
   animation: fadeUp .6s ease both;
 }
@@ -499,6 +619,17 @@ footer{position:relative;z-index:2;overflow:hidden;}
   border: 1px solid rgba(251,146,60,.35);
   color: #fb923c;
 }
+.coming-card::before,
+.coming-card::after{
+    display:none !important;
+}
+.coming-card{
+    border-top:none !important;
+    box-shadow:none;
+}
+.coming-card{
+    border-top:0;
+}
 </style>
 </head>
 <body>
@@ -507,7 +638,7 @@ footer{position:relative;z-index:2;overflow:hidden;}
 
 <div class="background-effects">
   <video id="bg-video" autoplay muted loop playsinline preload="metadata">
-    <source src="bg.mp4" type="video/mp4">
+    <source src="background.mp4" type="video/mp4">
   </video>
   <div class="nebula"></div>
   <div class="scanlines"></div>
@@ -534,18 +665,60 @@ footer{position:relative;z-index:2;overflow:hidden;}
     <li><a href="#portfolio">ผลงาน</a></li>
     <li><a href="#contact">ติดต่อ</a></li>
   </ul>
-  <a href="https://ezdn.app/blue_tcc" target="_blank" class="nav-cta">💸 DONATE</a>
+  <a href="https://ezdn.app/blue_tcc" target="_blank" class="nav-cta">💸 Support</a>
   <button class="hamburger" id="hamburger" aria-label="Menu">
     <span></span><span></span><span></span>
   </button>
 </nav>
 
 <div class="mobile-nav" id="mobile-nav">
-  <a href="#home" class="mobile-link">หน้าแรก</a>
-  <a href="#about" class="mobile-link">เกี่ยวกับ</a>
-  <a href="#skills" class="mobile-link">ทักษะ</a>
-  <a href="#portfolio" class="mobile-link">ผลงาน</a>
-  <a href="#contact" class="mobile-link">ติดต่อ</a>
+
+  <a href="#home" class="mobile-link">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M3 10.5L12 3L21 10.5V20A1 1 0 0 1 20 21H4A1 1 0 0 1 3 20V10.5Z"/>
+      <path d="M9 21V12H15V21"/>
+    </svg>
+    <span>หน้าแรก</span>
+  </a>
+
+  <a href="#about" class="mobile-link">
+    <svg viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="8" r="4"/>
+      <path d="M4 21C4 17 7 15 12 15C17 15 20 17 20 21"/>
+    </svg>
+    <span>เกี่ยวกับ</span>
+  </a>
+
+  <a href="#skills" class="mobile-link">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M12 2L14.5 8.5L21 11L14.5 13.5L12 20L9.5 13.5L3 11L9.5 8.5L12 2Z"/>
+    </svg>
+    <span>ทักษะ</span>
+  </a>
+
+  <a href="#portfolio" class="mobile-link">
+    <svg viewBox="0 0 24 24" fill="none">
+      <rect x="3" y="4" width="18" height="16" rx="2"/>
+      <path d="M3 15L8 10L13 15L16 12L21 17"/>
+    </svg>
+    <span>ผลงาน</span>
+  </a>
+
+  <a href="#contact" class="mobile-link">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M21 15V19A2 2 0 0 1 19 21C10.7 21 3 13.3 3 5A2 2 0 0 1 5 3H9L11 8L8.5 10.5C10 13.5 12.5 16 15.5 17.5L18 15L21 15Z"/>
+    </svg>
+    <span>ติดต่อ</span>
+  </a>
+
+  <a href="https://ezdn.app/blue_tcc" target="_blank" class="mobile-link">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M12 2V22"/>
+      <path d="M17 5H10A3 3 0 0 0 10 11H14A3 3 0 0 1 14 17H7"/>
+    </svg>
+    <span>Support</span>
+  </a>
+
 </div>
 
 <!-- ════════ HERO ════════ -->
@@ -557,6 +730,7 @@ footer{position:relative;z-index:2;overflow:hidden;}
   <span class="hero-badge dev">⚡ Developer</span>
   <span class="hero-badge perf">🚀 Performance Engineer</span>
   <span class="hero-badge ui">🎨 UI/UX Designer</span>
+  <span class="hero-badge ai">🤖 AI Specialist</span>
 </div>
     <h1 class="hero-name">
       Mr. <span class="glitch gradient-text" data-text="Blue">Blue</span>
@@ -584,7 +758,7 @@ footer{position:relative;z-index:2;overflow:hidden;}
     </div>
   </div>
 
-  <!-- ── Profile Image (แทน Live2D) ── -->
+  <!-- ── Profile Image ── -->
   <div class="profile-wrap">
     <div class="profile-ring-outer">
       <div class="profile-ring-inner">
@@ -594,7 +768,7 @@ footer{position:relative;z-index:2;overflow:hidden;}
     <div class="profile-name">Blue.tcc</div>
     <div class="profile-badge">
       <div class="profile-dot"></div>
-      <span>Available for work</span>
+      <span>Web Online</span>
     </div>
   </div>
 
@@ -630,8 +804,8 @@ footer{position:relative;z-index:2;overflow:hidden;}
 <section id="skills">
 <div class="container">
   <div class="sec-header reveal">
-    <span class="sec-label">Fluent languages</span>
-    <h2 class="sec-title">ภาษาที่ถนัด</h2>
+    <span class="sec-label">SKILLS</span>
+    <h2 class="sec-title">ทักษะ</h2>
   </div>
   <div class="skills-grid">
     <div class="skill-card glass reveal" data-pct="96"><span class="skill-icon">&#x1F310;</span><div class="skill-name">HTML5</div><div class="bar-bg"><div class="bar-fill" style="background:linear-gradient(90deg,#ff512f,#dd2476)"></div></div><div class="skill-pct">96%</div></div>
@@ -683,7 +857,7 @@ footer{position:relative;z-index:2;overflow:hidden;}
 <!-- ════════ CONTACT ════════ -->
 <section id="contact">
 <div class="container">
-  <div class="coming-card glass reveal">
+  <div class="coming-card full-glass reveal">
     <svg class="coming-star" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <path d="M50 0 Q50 50 100 50 Q50 50 50 100 Q50 50 0 50 Q50 50 50 0 Z" fill="currentColor"/>
     </svg>
@@ -735,13 +909,19 @@ footer{position:relative;z-index:2;overflow:hidden;}
             <span>Portfolio — Online</span>
           </div>
           <div class="footer-status-item">
-            <div class="footer-status-dot yellow"></div>
+            <div class="footer-status-dot ComingSoon"></div>
             <span>Contact — Coming Soon</span>
           </div>
           <div style="margin-top:1.2rem;">
             <div class="footer-col-title">Contact</div>
             <ul class="footer-links">
               <li><a href="https://mail.google.com/mail/?view=cm&fs=1&to=kaxranuhom@gmail.com" target="_blank">kaxranuhom@gmail.com</a></li>
+            </ul>
+          </div>
+          <div style="margin-top:1.2rem;">
+            <div class="footer-col-title">Support Dev</div>
+            <ul class="footer-links">
+              <li><a href="https://ezdn.app/blue_tcc" target="_blank">ezdn.app</a></li>
             </ul>
           </div>
         </div>
@@ -752,7 +932,7 @@ footer{position:relative;z-index:2;overflow:hidden;}
           &copy; 2026 Blue.tcc &mdash; Made with <span class="heart">&#x2665;</span>&nbsp;in Thailand
         </div>
         <div class="footer-badge">
-          Built with <span>HTML &bull; CSS &bull; JS</span>
+          Built with <span>HTML • CSS • JS</span>
         </div>
       </div>
     </div>
@@ -938,7 +1118,7 @@ if (window.matchMedia('(hover:hover)').matches) {
 }
 
 /* ══ TYPEWRITER ══ */
-const phrases = ['System Optimizer','Automation Builder','UI Designer','Windows Engineer'];
+const phrases = ['⚡ Developer','🚀 Performance Engineer','🎨 UI/UX Designer','🤖 AI Specialist'];
 let pi = 0, ci = 0, deleting = false;
 const te = document.getElementById('hero-type');
 function typ() {
