@@ -42,6 +42,35 @@ jobs:
           echo "=== App import ==="
           grep -n "Live2DAvatar" src/App.tsx || true
 
+      # Remove any artificial PixiJS ticker FPS cap in the production build.
+      # PixiJS maxFPS=0 means uncapped; the actual limit is the browser/display refresh rate.
+      - name: Enable uncapped Live2D/Pixi FPS
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("src/components/Live2DAvatar.tsx")
+          text = path.read_text(encoding="utf-8")
+          marker = 'Live2DModel.registerTicker(PIXI.Ticker);'
+          injection = '''Live2DModel.registerTicker(PIXI.Ticker);
+
+          // Uncap PixiJS/Live2D ticker FPS. 0 = no artificial FPS limit.
+          // The browser/display refresh rate remains the real upper bound.
+          try {
+            (PIXI.Ticker.shared as any).maxFPS = 0;
+            (PIXI.Ticker.shared as any).minFPS = 0;
+          } catch (e) {}
+          '''
+
+          if "(PIXI.Ticker.shared as any).maxFPS = 0" not in text:
+              if marker not in text:
+                  raise SystemExit("Could not find Live2D ticker registration marker")
+              path.write_text(text.replace(marker, injection, 1), encoding="utf-8")
+              print("[FPS] Injected uncapped shared Pixi ticker settings")
+          else:
+              print("[FPS] Uncapped ticker settings already present")
+          PY
+
       - name: Build
         run: npm run build
 
