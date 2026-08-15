@@ -33,7 +33,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm install --prefer-offline --no-audit --no-fund
+        run: npm install --legacy-peer-deps --prefer-offline --no-audit --no-fund
 
       - name: npm audit (report only)
         shell: bash
@@ -54,7 +54,6 @@ jobs:
       contents: read
       pages: write
       id-token: write
-      actions: read
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -73,7 +72,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm install --prefer-offline --no-audit --no-fund
+        run: npm install --legacy-peer-deps --prefer-offline --no-audit --no-fund
 
       - name: Verify Live2D source files
         shell: bash
