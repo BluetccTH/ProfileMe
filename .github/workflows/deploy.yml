@@ -63,6 +63,9 @@ jobs:
           print("Selected:", new)
           PY
 
+      - name: Enable English model expressions and emoji controls
+        run: node scripts/enable-live2d-expressions.cjs
+
       - name: Enable uncapped Live2D/Pixi FPS
         run: |
           python - <<'PY'
