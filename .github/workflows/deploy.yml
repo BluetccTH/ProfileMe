@@ -5,35 +5,30 @@ on:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
 concurrency:
   group: pages
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: 22
+  NODE_VERSION: 24
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  security-audit:
+    name: Dependency security audit
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
+    continue-on-error: true
+    permissions:
+      contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         with:
           fetch-depth: 1
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -41,48 +36,75 @@ jobs:
       - name: Install dependencies from lockfile
         run: npm ci --prefer-offline --no-audit --no-fund
 
-      - name: Dependency security audit
-        continue-on-error: true
-        run: npm audit --audit-level=high --omit=dev
+      - name: npm audit
+        run: npm audit --audit-level=high
+
+  deploy:
+    name: Build and deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      actions: read
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies from lockfile
+        run: npm ci --prefer-offline --no-audit --no-fund
+
+      - name: Verify Live2D source files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s public/live2d/MassageSeacubus_rei.model3.json
+          test -s public/live2d/MassageSeacubus_rei.moc3
+          test -s public/live2d/MassageSeacubus_rei.physics3.json
+          test -s public/live2d/MassageSeacubus_rei.cdi3.json
+          test -s public/live2d/MassageSeacubus_rei.4096/texture_00.png
+          test "$(head -c 4 public/live2d/MassageSeacubus_rei.moc3)" = "MOC3"
+          node -e 'const fs=require("fs"); const p="public/live2d/MassageSeacubus_rei.model3.json"; const m=JSON.parse(fs.readFileSync(p,"utf8")); const r=m.FileReferences||{}; if(r.Moc!=="MassageSeacubus_rei.moc3") throw new Error("Unexpected MOC3 reference"); if(!r.Textures?.length) throw new Error("No texture reference"); for(const x of [r.Moc,...r.Textures,r.Physics,r.DisplayInfo,...(r.Expressions||[]).map(x=>x.File),...Object.values(r.Motions||{}).flat().map(x=>x.File)]) { if(!x || x.includes("..") || x.startsWith("/")) throw new Error("Unsafe Live2D reference: "+x); } console.log("Live2D model references are valid.");'
 
       - name: Build
         run: npm run build
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
-      - name: Verify Live2D assets and integrity
+      - name: Verify final Live2D artifact
         shell: bash
         run: |
           set -euo pipefail
-          ROOT="dist/live2d"
-          MODEL="$ROOT/MassageSeacubus_rei.model3.json"
-          MOC="$ROOT/MassageSeacubus_rei.moc3"
-          TEXTURE="$ROOT/MassageSeacubus_rei.4096/texture_00.png"
-          PHYSICS="$ROOT/MassageSeacubus_rei.physics3.json"
-          CDI="$ROOT/MassageSeacubus_rei.cdi3.json"
+          test -s dist/live2d/MassageSeacubus_rei.model3.json
+          test -s dist/live2d/MassageSeacubus_rei.moc3
+          test -s dist/live2d/MassageSeacubus_rei.physics3.json
+          test -s dist/live2d/MassageSeacubus_rei.cdi3.json
+          test -s dist/live2d/MassageSeacubus_rei.4096/texture_00.png
+          test "$(head -c 4 dist/live2d/MassageSeacubus_rei.moc3)" = "MOC3"
+          sha256sum dist/live2d/MassageSeacubus_rei.model3.json dist/live2d/MassageSeacubus_rei.moc3 dist/live2d/MassageSeacubus_rei.physics3.json dist/live2d/MassageSeacubus_rei.cdi3.json dist/live2d/MassageSeacubus_rei.4096/texture_00.png
 
-          for file in "$MODEL" "$MOC" "$TEXTURE" "$PHYSICS" "$CDI"; do
-            test -s "$file" || { echo "Missing or empty asset: $file"; exit 1; }
-          done
-
-          test "$(head -c 4 "$MOC")" = "MOC3" || {
-            echo "Invalid MOC3 header"; exit 1;
-          }
-
-          node -e 'const fs=require("fs"); const p=process.argv[1]; const m=JSON.parse(fs.readFileSync(p,"utf8")); const t=m.FileReferences?.Textures; if(!Array.isArray(t)||!t.length) throw new Error("No texture reference"); for(const x of t){ if(x.includes("..") || x.startsWith("/")) throw new Error(`Unsafe texture path: ${x}`); } console.log("Model JSON references validated.");' "$MODEL"
-
-          sha256sum "$MODEL" "$MOC" "$TEXTURE" "$PHYSICS" "$CDI"
-          echo "Live2D assets verified; binaries are deployed byte-for-byte."
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
+      - name: Configure Pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
         with:
           path: ./dist
-          retention-days: 1
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128
