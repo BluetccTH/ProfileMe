@@ -41,11 +41,15 @@ jobs:
           test -f "$SRC/Number1.model3.json"
           test -f "$SRC/Number1.moc3"
           test -f "$SRC/Number1.physics3.json"
+          test -f "$SRC/Number1.cdi3.json"
           test -f "$SRC/Number1.4096/texture_00.png"
+          test -f "$SRC/Number1.4096/texture_01.png"
+          test -f "$SRC/Number1.4096/texture_02.png"
+          test -f "$SRC/Number1.4096/texture_03.png"
           rm -rf "$DST"
           mkdir -p "$DST"
           cp -a "$SRC/." "$DST/"
-          echo "Prepared English version-Full model"
+          echo "Prepared English version-Full model (native textures, no resize)"
 
       - name: Switch Live2D avatar to English version-Full
         run: |
@@ -58,14 +62,45 @@ jobs:
           if new not in text:
               if old in text:
                   text = text.replace(old, new, 1)
-                  path.write_text(text, encoding="utf-8")
               else:
                   raise SystemExit("Could not find existing Live2D model URL")
+          path.write_text(text, encoding="utf-8")
           print("Selected:", new)
           PY
 
       - name: Enable English model expressions and emoji controls
         run: node scripts/enable-live2d-expressions.cjs
+
+      - name: Fix English model mouse tracking parameters
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("src/components/Live2DAvatar.tsx")
+          text = path.read_text(encoding="utf-8")
+
+          anchor = '            core.setParameterValueById("ParamBodyAngleZ", bodyZ);'
+          extra = '''            core.setParameterValueById("ParamBodyAngleZ", bodyZ);
+
+            // Number1 uses the VTube Studio parameter set with the "2" variants
+            // for the main face/body tracking outputs. Keep both the standard and
+            // Number1-specific IDs updated so mouse tracking works on this model.
+            core.setParameterValueById("ParamAngleX2", angleX);
+            core.setParameterValueById("ParamAngleY2", angleY);
+            core.setParameterValueById("ParamAngleZ2", angleZ);
+            core.setParameterValueById("ParamBodyAngleX2", mx * 10);
+            core.setParameterValueById("ParamBodyAngleY2", -my * 10);
+            core.setParameterValueById("ParamBodyAngleZ2", bodyZ);
+'''
+
+          if 'ParamAngleX2", angleX' not in text:
+              if anchor not in text:
+                  raise SystemExit("Could not find Number1 tracking insertion point")
+              text = text.replace(anchor, extra, 1)
+
+          path.write_text(text, encoding="utf-8")
+          print("Enabled Number1 face/body tracking parameter IDs")
+          PY
 
       - name: Enable uncapped Live2D/Pixi FPS
         run: |
@@ -89,28 +124,38 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Verify English version-Full Live2D assets
+      - name: Verify English version-Full full-resolution textures and model
         run: |
           set -e
           ROOT="dist/live2d/English_version_Full"
           test -f "$ROOT/Number1.model3.json"
           test -f "$ROOT/Number1.moc3"
           test -f "$ROOT/Number1.physics3.json"
+          test -f "$ROOT/Number1.cdi3.json"
+          test -f "$ROOT/Number1.4096/texture_00.png"
+          test -f "$ROOT/Number1.4096/texture_01.png"
+          test -f "$ROOT/Number1.4096/texture_02.png"
+          test -f "$ROOT/Number1.4096/texture_03.png"
           python -m pip install --disable-pip-version-check --quiet Pillow
           python - "$ROOT/Number1.4096" <<'PY'
           import sys
           from pathlib import Path
           from PIL import Image
+
           root = Path(sys.argv[1])
           textures = sorted(root.glob("*.png"))
-          if not textures:
-              raise SystemExit("ERROR: no Live2D textures found")
+          if len(textures) != 4:
+              raise SystemExit(f"ERROR: expected 4 textures, found {len(textures)}")
+
           for path in textures:
               with Image.open(path) as image:
                   w, h = image.size
                   print(f"{path.name}: {w}x{h}, {path.stat().st_size} bytes")
-                  if w > 4096 or h > 8192:
-                      raise SystemExit(f"ERROR: texture exceeds 4096x8192: {path}")
+                  # Never resize: only reject impossible oversize assets.
+                  if w > 8192 or h > 8192:
+                      raise SystemExit(f"ERROR: texture exceeds 8192px: {path}")
+
+          print("Full native texture files preserved; no deployment resize performed.")
           PY
           echo "=== Expressions ==="
           find "$ROOT/Expressions" -type f -name "*.exp3.json" -print | sort || true
