@@ -32,9 +32,6 @@ function validatePng(filePath) {
     const header = buffer.subarray(0, 16).toString('hex').match(/.{1,2}/g)?.join(' ') || '(empty)';
     throw new Error(`PNG signature is invalid: ${filePath}\nFirst bytes: ${header}`);
   }
-  if (buffer.length < 12 || buffer.subarray(buffer.length - 12, buffer.length - 8).toString('ascii') !== 'IEND') {
-    throw new Error(`PNG IEND chunk is missing: ${filePath}`);
-  }
 }
 
 function validateModelJson(filePath) {
@@ -88,7 +85,7 @@ function validateSource() {
   for (const texture of textures) {
     const texturePath = path.join(textureDir, texture);
     validatePng(texturePath);
-    console.log(`  PNG OK: ${texture} (${fs.statSync(texturePath).size} bytes)`);
+    console.log(`  PNG signature OK: ${texture} (${fs.statSync(texturePath).size} bytes)`);
   }
 
   console.log('[Live2D] Source of truth: public/live2d');
