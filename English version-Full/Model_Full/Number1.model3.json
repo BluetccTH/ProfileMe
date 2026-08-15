@@ -1,29 +1,39 @@
 {
-	"Version": 3,
-	"FileReferences": {
-		"Moc": "Number1.moc3",
-		"Textures": [
-			"Number1.4096/texture_00.png",
-			"Number1.4096/texture_01.png",
-			"Number1.4096/texture_02.png",
-			"Number1.4096/texture_03.png"
-		],
-		"Physics": "Number1.physics3.json",
-		"DisplayInfo": "Number1.cdi3.json"
-	},
-	"Groups": [
-		{
-			"Target": "Parameter",
-			"Name": "EyeBlink",
-			"Ids": [
-				"ParamEyeLOpen",
-				"ParamEyeROpen"
-			]
-		},
-		{
-			"Target": "Parameter",
-			"Name": "LipSync",
-			"Ids": []
-		}
-	]
+  "Version": 3,
+  "FileReferences": {
+    "Moc": "Number1.moc3",
+    "Textures": [
+      "Number1.4096/texture_00.png",
+      "Number1.4096/texture_01.png",
+      "Number1.4096/texture_02.png",
+      "Number1.4096/texture_03.png"
+    ],
+    "Physics": "Number1.physics3.json",
+    "DisplayInfo": "Number1.cdi3.json",
+    "Expressions": [
+      { "Name": "Blushing", "File": "Expressions/Blushing.exp3.json" },
+      { "Name": "Controller", "File": "Expressions/Controller.exp3.json" },
+      { "Name": "Heart eyes", "File": "Expressions/Heart eyes.exp3.json" },
+      { "Name": "Microphone appears", "File": "Expressions/Microphone appears.exp3.json" },
+      { "Name": "Microphone gesture", "File": "Expressions/Microphone gesture .exp3.json" },
+      { "Name": "Microphone gesture without microphone", "File": "Expressions/Microphone gesture (without microphoneú⌐.exp3.json" },
+      { "Name": "Microphone position", "File": "Expressions/Microphone position.exp3.json" },
+      { "Name": "Sweat", "File": "Expressions/Sweat.exp3.json" },
+      { "Name": "black face", "File": "Expressions/black face.exp3.json" },
+      { "Name": "coat disappears", "File": "Expressions/coat disappears.exp3.json" },
+      { "Name": "cry", "File": "Expressions/cry.exp3.json" }
+    ]
+  },
+  "Groups": [
+    {
+      "Target": "Parameter",
+      "Name": "EyeBlink",
+      "Ids": ["ParamEyeLOpen", "ParamEyeROpen"]
+    },
+    {
+      "Target": "Parameter",
+      "Name": "LipSync",
+      "Ids": []
+    }
+  ]
 }
