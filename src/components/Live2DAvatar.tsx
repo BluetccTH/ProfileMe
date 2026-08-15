@@ -82,6 +82,13 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({ className = "", onLo
       try {
         setLoading(true); setError(null);
         const PIXI: any = await import("pixi.js");
+        // The Live2D package uses PIXI's global ticker when one is not passed explicitly.
+        // Expose the same Pixi module instance and disable worker-based image probing, which
+        // otherwise tries to fetch a data: URL under GitHub Pages CSP.
+        (window as any).PIXI = PIXI;
+        if (PIXI.Assets?.setPreferences) {
+          try { PIXI.Assets.setPreferences({ preferWorkers: false }); } catch {}
+        }
         if (!(window as any).Live2DCubismCore) {
           let script = document.querySelector('script[src*="live2dcubismcore"]') as HTMLScriptElement | null;
           if (!script) {
@@ -112,7 +119,11 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({ className = "", onLo
         });
         appRef.current = app;
 
-        const model = await Live2DModel.from(modelUrl, { autoInteract: false });
+        const model = await Live2DModel.from(modelUrl, {
+          autoHitTest: false,
+          autoFocus: false,
+          ticker: app.ticker,
+        });
         if (cancelled) { model.destroy(); app.destroy(true); return; }
         modelRef.current = model;
 
