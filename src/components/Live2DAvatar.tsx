@@ -30,7 +30,7 @@ const readVerifiedResponse = async (response: Response, url: string, kind: strin
   return buffer;
 };
 
-const validateLive2DAssets = async (modelUrl: string): Promise<any> => {
+const validateLive2DAssets = async (modelUrl: string): Promise<void> => {
   const modelResponse = await fetch(modelUrl, { cache: "no-store" });
   const modelBuffer = await readVerifiedResponse(modelResponse, modelUrl, "Live2D model JSON");
   const modelType = (modelResponse.headers.get("content-type") || "").toLowerCase();
@@ -51,7 +51,7 @@ const validateLive2DAssets = async (modelUrl: string): Promise<any> => {
   if (refs.Physics) references.add(refs.Physics);
   if (refs.Pose) references.add(refs.Pose);
   if (refs.DisplayInfo) references.add(refs.DisplayInfo);
-  for (const file of refs.Textures || []) references.add(file);
+  for (const file of refs.Textures || []) if (typeof file === "string" && file) references.add(file);
   for (const expression of refs.Expressions || []) if (expression?.File) references.add(expression.File);
   for (const group of Object.values(refs.Motions || {})) {
     for (const motion of Array.isArray(group) ? group : []) if ((motion as any)?.File) references.add((motion as any).File);
@@ -76,8 +76,6 @@ const validateLive2DAssets = async (modelUrl: string): Promise<any> => {
       if (png.some((value, index) => bytes[index] !== value)) throw new Error(`PNG signature is invalid: ${relativePath}`);
     }
   }
-
-  return model;
 };
 
 interface Live2DAvatarProps { className?: string; onLoaded?: () => void; width?: number; height?: number; interactive?: boolean; }
@@ -131,9 +129,10 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({ className = "", onLo
         appRef.current = pixiApp;
 
         const modelUrl = resolveAssetUrl(MODEL_RELATIVE_PATH);
-        const modelJson = await validateLive2DAssets(modelUrl);
-        modelJson.url = modelUrl;
-        const model = await Live2DModel.from(modelJson, { autoInteract: false });
+        await validateLive2DAssets(modelUrl);
+        // Pass the exact verified model URL to pixi-live2d-display. Its Cubism resource
+        // resolver then resolves MOC3/textures relative to the model URL itself.
+        const model = await Live2DModel.from(modelUrl, { autoInteract: false });
         if (destroyedRef.current) { model.destroy(); pixiApp.destroy(true); return; }
         modelRef.current = model;
         const baseScale = Math.min(appWidth / model.width, appHeight / model.height) * 3.3;
