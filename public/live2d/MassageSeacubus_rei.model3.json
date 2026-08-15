@@ -1,0 +1,43 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "MassageSeacubus_rei.moc3",
+		"Textures": [
+			"MassageSeacubus_rei.4096/texture_00.png"
+		],
+		"Physics": "MassageSeacubus_rei.physics3.json",
+		"DisplayInfo": "MassageSeacubus_rei.cdi3.json",
+		"Motions": {
+			"Idle": [
+				{
+					"File": "zidong.motion3.json"
+				}
+			]
+		},
+		"Expressions": [
+			{ "Name": "1", "File": "1.exp3.json" },
+			{ "Name": "2", "File": "2.exp3.json" },
+			{ "Name": "3", "File": "3.exp3.json" },
+			{ "Name": "4", "File": "4.exp3.json" },
+			{ "Name": "5", "File": "5.exp3.json" },
+			{ "Name": "6", "File": "6.exp3.json" },
+			{ "Name": "7", "File": "7.exp3.json" },
+			{ "Name": "8", "File": "8.exp3.json" }
+		]
+	},
+	"Groups": [
+		{
+			"Target": "Parameter",
+			"Name": "LipSync",
+			"Ids": []
+		},
+		{
+			"Target": "Parameter",
+			"Name": "EyeBlink",
+			"Ids": [
+				"ParamEyeLOpen",
+				"ParamEyeROpen"
+			]
+		}
+	]
+}
