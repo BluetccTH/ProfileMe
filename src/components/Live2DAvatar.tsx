@@ -1,19 +1,16 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Sparkles, Eye, Smile, RefreshCw, Maximize2, Minimize2, Sliders, Volume2, VolumeX, Camera, Layers, ChevronDown, Info } from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Eye, RefreshCw, Smile, Sparkles, Info } from "lucide-react";
 
 const resolveAssetUrl = (assetPath: string): string => {
   if (!assetPath) return "";
-  if (/^(?:https?:|data:|blob:)/.test(assetPath)) return assetPath;
-  const base = (import.meta as any).env?.BASE_URL || "./";
-  const normalizedBase = base.endsWith("/") ? base : `${base}/`;
-  const cleanPath = assetPath.replace(/^\.\//, "").replace(/^\//, "");
+  if (/^(https?:|data:|blob:)/.test(assetPath)) return assetPath;
+  const base = ((import.meta as any).env?.BASE_URL || "./").replace(/\/?$/, "/");
+  const clean = assetPath.replace(/^\.\//, "").replace(/^\//, "");
   try {
     const loc = new URL(window.location.href);
     if (!loc.pathname.endsWith("/") && !loc.pathname.split("/").pop()?.includes(".")) loc.pathname += "/";
-    return new URL(cleanPath, new URL(normalizedBase, loc)).href;
-  } catch {
-    return `./${cleanPath}`;
-  }
+    return new URL(clean, new URL(base, loc)).href;
+  } catch { return `./${clean}`; }
 };
 
 interface Live2DAvatarProps { className?: string; onLoaded?: () => void; width?: number; height?: number; interactive?: boolean; }
@@ -21,117 +18,106 @@ interface Live2DAvatarProps { className?: string; onLoaded?: () => void; width?:
 export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({ className = "", onLoaded, width = 380, height = 420, interactive = true }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadingError, setLoadingError] = useState<string | null>(null);
-  const [currentExpression, setCurrentExpression] = useState<number | null>(null);
-  const [trackingMode, setTrackingMode] = useState<"mouse" | "auto" | "locked">("mouse");
-  const [isHovered, setIsHovered] = useState(false);
-  const [modelScale, setModelScale] = useState(0.24);
-  const [showControls, setShowControls] = useState(false);
-  const [clickCount, setClickCount] = useState(0);
-
-  const appRef = useRef<any>(null);
   const modelRef = useRef<any>(null);
-  const targetPosRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
-  const isDestroyedRef = useRef(false);
-
-  const expressions = [
-    { id: 1, name: "Default (ปกติ)", param: "ParamBiaoQ1", emoji: "✨" },
-    { id: 2, name: "Smile (ยิ้ม)", param: "ParamBiaoQ2", emoji: "😊" },
-    { id: 3, name: "Blush (เขิน)", param: "ParamBiaoQ3", emoji: "😳" },
-    { id: 4, name: "Sparkle (ตาเป็นประกาย)", param: "ParamBiaoQ4", emoji: "🤩" },
-    { id: 5, name: "Confident (มั่นใจ)", param: "ParamBiaoQ5", emoji: "😎" },
-    { id: 6, name: "Wink (ขยิบตา)", param: "ParamBiaoQ6", emoji: "😉" },
-    { id: 7, name: "Surprise (ประหลาดใจ)", param: "ParamBiaoQ7", emoji: "😮" },
-    { id: 8, name: "Soft Glow (ละมุน)", param: "ParamBiaoQ6", emoji: "🌸" },
-  ];
+  const targetRef = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
+  const destroyedRef = useRef(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [tracking, setTracking] = useState<"mouse" | "auto" | "locked">("mouse");
+  const [showControls, setShowControls] = useState(false);
+  const [clicks, setClicks] = useState(0);
 
   useEffect(() => {
-    isDestroyedRef.current = false;
-    let pixiApp: any = null;
-    let animFrameId = 0;
-
-    const initLive2D = async () => {
+    destroyedRef.current = false;
+    let app: any = null;
+    let raf = 0;
+    const init = async () => {
       try {
-        setLoading(true); setLoadingError(null);
+        setLoading(true); setError(null);
         const PIXI = await import("pixi.js");
-        try { (PIXI.settings as any).RENDER_OPTIONS = { ...((PIXI.settings as any).RENDER_OPTIONS || {}), hello: false }; } catch {}
         if (!(window as any).Live2DCubismCore) {
-          let script = document.querySelector('script[src*="live2dcubismcore"]') as HTMLScriptElement;
+          let script = document.querySelector('script[src*="live2dcubismcore"]') as HTMLScriptElement | null;
           if (!script) { script = document.createElement("script"); script.src = resolveAssetUrl("live2dcubismcore.min.js"); document.head.appendChild(script); }
-          for (let i = 0; i < 50 && !(window as any).Live2DCubismCore; i++) await new Promise(r => setTimeout(r, 100));
+          for (let i = 0; i < 60 && !(window as any).Live2DCubismCore; i++) await new Promise(r => setTimeout(r, 100));
         }
         if (!(window as any).Live2DCubismCore) throw new Error("Live2DCubismCore not found.");
-
         (window as any).PIXI = PIXI;
         const { Live2DLoader, Live2DModel } = await import("pixi-live2d-display/cubism4");
         Live2DModel.registerTicker(PIXI.Ticker);
         try { (PIXI.Ticker.shared as any).maxFPS = 0; (PIXI.Ticker.shared as any).minFPS = 0; } catch {}
-
         Live2DLoader.middlewares = [async (context: any, next: any) => {
-          const rawUrl = context.settings ? context.settings.resolveURL(context.url) : context.url;
-          const targetUrl = resolveAssetUrl(rawUrl);
-          const res = await fetch(targetUrl);
-          if (!res.ok) throw new Error(`Failed to load ${targetUrl} (Status ${res.status})`);
+          const raw = context.settings?.resolveURL ? context.settings.resolveURL(context.url) : context.url;
+          const url = resolveAssetUrl(raw);
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`Failed to load ${url} (${res.status})`);
           if (context.type === "json") context.result = await res.json();
           else if (context.type === "arraybuffer") {
-            const arrayBuffer = await res.arrayBuffer();
-            if (targetUrl.endsWith(".moc3")) {
-              const magic = new Uint8Array(arrayBuffer, 0, 4);
-              if (String.fromCharCode(...magic) !== "MOC3") throw new Error(`Invalid MOC3: ${targetUrl}`);
+            const data = await res.arrayBuffer();
+            if (url.toLowerCase().endsWith(".moc3")) {
+              const magic = String.fromCharCode(...new Uint8Array(data, 0, 4));
+              if (magic !== "MOC3") throw new Error(`Invalid MOC3: ${url}`);
             }
-            context.result = arrayBuffer;
+            context.result = data;
           } else context.result = await res.text();
           if (next) return next();
         }];
-
-        if (isDestroyedRef.current || !canvasRef.current || !containerRef.current) return;
+        if (!canvasRef.current || !containerRef.current || destroyedRef.current) return;
         const rect = containerRef.current.getBoundingClientRect();
-        const appWidth = rect.width || width, appHeight = rect.height || height;
-        pixiApp = new PIXI.Application({ view: canvasRef.current, width: appWidth, height: appHeight, backgroundAlpha: 0, antialias: true, autoDensity: true, resolution: window.devicePixelRatio || 1 });
-        appRef.current = pixiApp;
-
-        // Original full 海魔完整版 model.
-        const modelUrl = resolveAssetUrl("live2d/MassageSeacubus_rei.model3.json");
-        const model = await Live2DModel.from(modelUrl, { autoInteract: false });
-        if (isDestroyedRef.current) { model.destroy(); pixiApp.destroy(true); return; }
+        const w = rect.width || width, h = rect.height || height;
+        app = new PIXI.Application({ view: canvasRef.current, width: w, height: h, backgroundAlpha: 0, antialias: true, autoDensity: true, resolution: window.devicePixelRatio || 1 });
+        // The public path is generated from the original 海魔完整版 package by restore-live2d.cjs.
+        const model = await Live2DModel.from(resolveAssetUrl("live2d/MassageSeacubus_rei.model3.json"), { autoInteract: false });
+        if (destroyedRef.current) { model.destroy(); app.destroy(true); return; }
         modelRef.current = model;
-        const baseScale = Math.min(appWidth / model.width, appHeight / model.height) * 3.3;
-        model.scale.set(baseScale); model.anchor.set(0.5, 0.22); model.position.set(appWidth / 2, appHeight * 0.48); pixiApp.stage.addChild(model);
-
-        let lastBlinkTime = performance.now(), blinkDuration = 150, isBlinking = false, nextBlinkInterval = 3000 + Math.random() * 2000;
-        const updateModelParams = () => {
-          if (!modelRef.current || isDestroyedRef.current) return;
-          const now = performance.now();
+        const scale = Math.min(w / model.width, h / model.height) * 3.3;
+        model.scale.set(scale); model.anchor.set(0.5, 0.22); model.position.set(w / 2, h * 0.48); app.stage.addChild(model);
+        const tick = () => {
+          if (destroyedRef.current || !modelRef.current) return;
           const core = modelRef.current.internalModel?.coreModel;
           if (core) {
-            const lerpSpeed = 0.08;
-            targetPosRef.current.x += (targetPosRef.current.targetX - targetPosRef.current.x) * lerpSpeed;
-            targetPosRef.current.y += (targetPosRef.current.targetY - targetPosRef.current.y) * lerpSpeed;
-            const mx = targetPosRef.current.x, my = targetPosRef.current.y;
-            // Original 海魔完整版 uses standard Cubism Angle/EyeBall parameters.
-            core.setParameterValueById("ParamAngleX", mx * 30);
-            core.setParameterValueById("ParamAngleY", -my * 25);
-            core.setParameterValueById("ParamAngleZ", mx * my * -15);
-            core.setParameterValueById("ParamEyeBallX", mx);
-            core.setParameterValueById("ParamEyeBallY", -my);
-            core.setParameterValueById("ParamBodyAngleZ", mx * 8);
-            if (!isBlinking && now - lastBlinkTime > nextBlinkInterval) { isBlinking = true; lastBlinkTime = now; }
-            if (isBlinking) {
-              const elapsed = now - lastBlinkTime;
-              if (elapsed < blinkDuration) {
-                const p = elapsed / blinkDuration;
-                const eyeOpen = p < 0.5 ? 1 - p * 2 : (p - 0.5) * 2;
-                core.setParameterValueById("ParamEyeLOpen", eyeOpen); core.setParameterValueById("ParamEyeROpen", eyeOpen);
-              } else { isBlinking = false; lastBlinkTime = now; nextBlinkInterval = 2500 + Math.random() * 3500; core.setParameterValueById("ParamEyeLOpen", 1); core.setParameterValueById("ParamEyeROpen", 1); }
-            }
+            const t = targetRef.current;
+            t.x += (t.tx - t.x) * 0.12; t.y += (t.ty - t.y) * 0.12;
+            core.setParameterValueById("ParamAngleX", t.x * 30);
+            core.setParameterValueById("ParamAngleY", -t.y * 25);
+            core.setParameterValueById("ParamAngleZ", t.x * t.y * -15);
+            core.setParameterValueById("ParamEyeBallX", t.x);
+            core.setParameterValueById("ParamEyeBallY", -t.y);
+            core.setParameterValueById("ParamBodyAngleZ", t.x * 8);
           }
-          animFrameId = requestAnimationFrame(updateModelParams);
+          raf = requestAnimationFrame(tick);
         };
-        animFrameId = requestAnimationFrame(updateModelParams);
+        raf = requestAnimationFrame(tick);
         setLoading(false); onLoaded?.();
-      } catch (err: any) { console.error("Live2D initialization error:", err); setLoadingError(err?.message || "Failed to load Live2D model"); setLoading(false); }
+      } catch (e: any) { console.error(e); setError(e?.message || "Failed to load Live2D model"); setLoading(false); }
     };
-    initLive2D();
-    return () => { isDestroyedRef.current = true; cancelAnimationFrame(animFrameId); if (modelRef.current) { try { modelRef.current.destroy({ children: true }); } catch {} modelRef.current = null; } if (pixiApp) { try { pixiApp.destroy(true, { children: true, texture: true }); } catch {} pixiApp = null; } };
+    init();
+    return () => { destroyedRef.current = true; cancelAnimationFrame(raf); try { modelRef.current?.destroy({ children: true }); } catch {} try { app?.destroy(true, { children: true, texture: true }); } catch {} modelRef.current = null; };
   }, [width, height, onLoaded]);
+
+  const handleMouse = useCallback((x: number, y: number) => {
+    if (tracking !== "mouse" || !containerRef.current) return;
+    const r = containerRef.current.getBoundingClientRect();
+    targetRef.current.tx = Math.max(-1, Math.min(1, (x - (r.left + r.width / 2)) / Math.max(window.innerWidth * .45, r.width * 1.5)));
+    targetRef.current.ty = Math.max(-1, Math.min(1, (y - (r.top + r.height * .4)) / Math.max(window.innerHeight * .45, r.height * 1.5)));
+  }, [tracking]);
+
+  useEffect(() => { const fn = (e: MouseEvent) => handleMouse(e.clientX, e.clientY); window.addEventListener("mousemove", fn, { passive: true }); return () => window.removeEventListener("mousemove", fn); }, [handleMouse]);
+  useEffect(() => { if (tracking !== "auto") return; const id = window.setInterval(() => { targetRef.current.tx = (Math.random() - .5) * 1.2; targetRef.current.ty = (Math.random() - .5) * .8; }, 2400); return () => window.clearInterval(id); }, [tracking]);
+
+  return <div ref={containerRef} className={`relative overflow-hidden rounded-3xl flex flex-col items-center justify-center ${className}`} onClick={() => setClicks(v => v + 1)}>
+    <div className="absolute inset-0 bg-gradient-to-b from-[#0b0f19]/80 via-[#0d1224]/70 to-[#070913]/90 border border-blue-500/20 rounded-3xl" />
+    <div className="absolute top-3 inset-x-3 flex items-center justify-between px-3 py-1.5 rounded-full bg-slate-900/70 border border-white/10 backdrop-blur-md z-20 text-[11px] text-slate-300">
+      <span className="font-semibold text-cyan-400">LIVE2D • 海魔完整版</span>
+      <div className="flex gap-1.5">
+        <button type="button" onClick={e => { e.stopPropagation(); setTracking(v => v === "mouse" ? "auto" : v === "auto" ? "locked" : "mouse"); }} className="p-1.5 rounded-md bg-white/5"><Eye className="w-3 h-3" /></button>
+        <button type="button" onClick={e => { e.stopPropagation(); setShowControls(v => !v); }} className="p-1.5 rounded-md bg-white/5"><Smile className="w-3 h-3" /></button>
+        <button type="button" onClick={e => { e.stopPropagation(); targetRef.current.tx = 0; targetRef.current.ty = 0; }} className="p-1.5 rounded-md bg-white/5"><RefreshCw className="w-3 h-3" /></button>
+      </div>
+    </div>
+    {loading && <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#070913]/90 rounded-3xl"><Sparkles className="w-8 h-8 text-blue-400 animate-pulse mb-3" /><span className="text-xs text-blue-300">กำลังโหลด Live2D...</span></div>}
+    {error && <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#070913]/95 rounded-3xl p-6 text-center"><Info className="w-8 h-8 text-rose-400 mb-2" /><span className="text-xs text-rose-300">{error}</span></div>}
+    <canvas ref={canvasRef} id="live2d-canvas" className="w-full h-full object-contain z-10" style={{ minHeight: height, minWidth: width }} />
+    {showControls && <div onClick={e => e.stopPropagation()} className="absolute bottom-12 inset-x-3 z-30 rounded-2xl bg-slate-950/90 border border-purple-500/30 p-3 text-xs text-slate-300">🖱️ {tracking === "mouse" ? "ตามเมาส์" : tracking === "auto" ? "มองอัตโนมัติ" : "ล็อกทิศทาง"}<div className="mt-1 text-slate-500">Texture native • FPS ไม่ล็อก • โมเดลเดิม</div></div>}
+    <div className="absolute bottom-3 inset-x-4 z-20 flex justify-between text-[10px] text-slate-400 pointer-events-none"><span>🖱️ เลื่อนเมาส์เพื่อให้โมเดลหันหน้า/สบตา</span><span>{interactive ? `✨ คลิก (${clicks})` : ""}</span></div>
+  </div>;
+};
