@@ -10,12 +10,12 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "predeploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
     "@pixi/core": "^7.4.2",
+    "@pixi/display": "^7.4.2",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
     "dotenv": "^17.2.3",
