@@ -30,7 +30,7 @@ const readVerifiedResponse = async (response: Response, url: string, kind: strin
   return buffer;
 };
 
-const validateLive2DAssets = async (modelUrl: string): Promise<void> => {
+const validateLive2DAssets = async (modelUrl: string): Promise<any> => {
   const modelResponse = await fetch(modelUrl, { cache: "no-store" });
   const modelBuffer = await readVerifiedResponse(modelResponse, modelUrl, "Live2D model JSON");
   const modelType = (modelResponse.headers.get("content-type") || "").toLowerCase();
@@ -76,6 +76,8 @@ const validateLive2DAssets = async (modelUrl: string): Promise<void> => {
       if (png.some((value, index) => bytes[index] !== value)) throw new Error(`PNG signature is invalid: ${relativePath}`);
     }
   }
+
+  return model;
 };
 
 interface Live2DAvatarProps { className?: string; onLoaded?: () => void; width?: number; height?: number; interactive?: boolean; }
@@ -129,8 +131,9 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({ className = "", onLo
         appRef.current = pixiApp;
 
         const modelUrl = resolveAssetUrl(MODEL_RELATIVE_PATH);
-        await validateLive2DAssets(modelUrl);
-        const model = await Live2DModel.from(modelUrl, { autoInteract: false });
+        const modelJson = await validateLive2DAssets(modelUrl);
+        modelJson.url = modelUrl;
+        const model = await Live2DModel.from(modelJson, { autoInteract: false });
         if (destroyedRef.current) { model.destroy(); pixiApp.destroy(true); return; }
         modelRef.current = model;
         const baseScale = Math.min(appWidth / model.width, appHeight / model.height) * 3.3;
