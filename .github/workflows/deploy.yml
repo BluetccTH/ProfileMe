@@ -21,16 +21,17 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+          package-manager-cache: false
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps --prefer-offline --no-audit --no-fund
@@ -42,7 +43,7 @@ jobs:
           npm audit --audit-level=high
           status=$?
           if [ "$status" -ne 0 ]; then
-            echo "::warning::npm audit reported high/critical dependency findings. Deployment is intentionally not blocked by this separate audit job."
+            echo "::warning::npm audit reported dependency findings. Deployment is intentionally not blocked by this separate audit job."
           fi
           exit 0
 
@@ -60,31 +61,46 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+          package-manager-cache: false
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps --prefer-offline --no-audit --no-fund
 
-      - name: Verify Live2D source files
+      - name: Verify Live2D source and references
         shell: bash
         run: |
           set -euo pipefail
-          test -s public/live2d/MassageSeacubus_rei.model3.json
-          test -s public/live2d/MassageSeacubus_rei.moc3
-          test -s public/live2d/MassageSeacubus_rei.physics3.json
-          test -s public/live2d/MassageSeacubus_rei.cdi3.json
-          test -s public/live2d/MassageSeacubus_rei.4096/texture_00.png
-          test "$(head -c 4 public/live2d/MassageSeacubus_rei.moc3)" = "MOC3"
-          node -e 'const fs=require("fs"); const p="public/live2d/MassageSeacubus_rei.model3.json"; const m=JSON.parse(fs.readFileSync(p,"utf8")); const r=m.FileReferences||{}; if(r.Moc!=="MassageSeacubus_rei.moc3") throw new Error("Unexpected MOC3 reference"); if(!r.Textures?.length) throw new Error("No texture reference"); for(const x of [r.Moc,...r.Textures,r.Physics,r.DisplayInfo,...(r.Expressions||[]).map(x=>x.File),...Object.values(r.Motions||{}).flat().map(x=>x.File)]) { if(!x || x.includes("..") || x.startsWith("/")) throw new Error("Unsafe Live2D reference: "+x); } console.log("Live2D model references are valid.");'
+          node scripts/restore-live2d.cjs
+          node - <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const root = path.resolve('public/live2d');
+          const modelPath = path.join(root, 'MassageSeacubus_rei.model3.json');
+          const model = JSON.parse(fs.readFileSync(modelPath, 'utf8'));
+          const refs = model.FileReferences || {};
+          const refsToCheck = new Set([refs.Moc, refs.Physics, refs.Pose, refs.DisplayInfo]);
+          for (const file of refs.Textures || []) refsToCheck.add(file);
+          for (const expression of refs.Expressions || []) if (expression?.File) refsToCheck.add(expression.File);
+          for (const group of Object.values(refs.Motions || {})) {
+            for (const motion of Array.isArray(group) ? group : []) if (motion?.File) refsToCheck.add(motion.File);
+          }
+          for (const file of refsToCheck) {
+            if (!file || file.startsWith('/') || file.includes('..')) throw new Error(`Unsafe reference: ${file}`);
+            const full = path.resolve(root, file);
+            if (!fs.existsSync(full) || !fs.statSync(full).isFile()) throw new Error(`Missing referenced Live2D asset: ${file}`);
+          }
+          console.log(`Verified ${refsToCheck.size} referenced Live2D files in public/live2d.`);
+          NODE
 
       - name: Build
         run: npm run build
@@ -92,25 +108,16 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Verify final Live2D artifact
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -s dist/live2d/MassageSeacubus_rei.model3.json
-          test -s dist/live2d/MassageSeacubus_rei.moc3
-          test -s dist/live2d/MassageSeacubus_rei.physics3.json
-          test -s dist/live2d/MassageSeacubus_rei.cdi3.json
-          test -s dist/live2d/MassageSeacubus_rei.4096/texture_00.png
-          test "$(head -c 4 dist/live2d/MassageSeacubus_rei.moc3)" = "MOC3"
-          sha256sum dist/live2d/MassageSeacubus_rei.model3.json dist/live2d/MassageSeacubus_rei.moc3 dist/live2d/MassageSeacubus_rei.physics3.json dist/live2d/MassageSeacubus_rei.cdi3.json dist/live2d/MassageSeacubus_rei.4096/texture_00.png
+        run: npm run verify:live2d
 
       - name: Configure Pages
-        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d
+        uses: actions/configure-pages@v6
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./dist
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128
+        uses: actions/deploy-pages@v5
