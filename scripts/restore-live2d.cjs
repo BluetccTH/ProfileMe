@@ -13,9 +13,8 @@ function assertDirectory(dirPath, label) {
 }
 
 function validateMoc3(buffer, filePath) {
-  if (buffer.length < 64) throw new Error(`.moc3 file is too small: ${buffer.length} bytes`);
-  if (buffer.subarray(0, 4).toString('ascii') !== 'MOC3') {
-    throw new Error(`.moc3 validation failed for ${path.basename(filePath)}: expected MOC3`);
+  if (buffer.length < 64 || buffer.subarray(0, 4).toString('ascii') !== 'MOC3') {
+    throw new Error(`.moc3 validation failed for ${path.basename(filePath)}`);
   }
 }
 
@@ -43,55 +42,73 @@ function validateTextureSet(textureDir) {
   return textures;
 }
 
+function findFallbackFile(primaryRoot, fallbackRoot, relativePath) {
+  const primary = path.join(primaryRoot, relativePath);
+  if (fs.existsSync(primary)) return { path: primary, source: 'live2d' };
+  const fallback = path.join(fallbackRoot, relativePath);
+  if (fs.existsSync(fallback)) return { path: fallback, source: '海魔完整版' };
+  return null;
+}
+
+function copyIfMissing(primaryRoot, fallbackRoot, relativePath) {
+  const result = findFallbackFile(primaryRoot, fallbackRoot, relativePath);
+  if (!result) throw new Error(`Missing required Live2D asset: ${relativePath}`);
+  const destination = path.join(primaryRoot, relativePath);
+  if (result.source === '海魔完整版') {
+    copyBinary(result.path, destination);
+    console.log(`[Live2D Fallback] Restored missing asset: ${relativePath}`);
+  }
+}
+
 function restoreAssets() {
-  // Active model: original full 海魔完整版 package.
-  const sourceDir = path.resolve(__dirname, '../海魔完整版/MassageSeacubus_full_rei');
-  const publicDir = path.resolve(__dirname, '../public/live2d/MassageSeacubus_rei');
+  // Primary source: public/live2d.
+  // Fallback only for missing assets: 海魔完整版/MassageSeacubus_full_rei.
+  // Existing live2d files are never overwritten.
+  const primaryRoot = path.resolve(__dirname, '../public/live2d');
+  const fallbackRoot = path.resolve(__dirname, '../海魔完整版/MassageSeacubus_full_rei');
+  const modelName = 'MassageSeacubus_rei';
 
-  const sourceModel = path.join(sourceDir, 'MassageSeacubus_rei.model3.json');
-  const sourceMoc = path.join(sourceDir, 'MassageSeacubus_rei.moc3');
-  const sourcePhysics = path.join(sourceDir, 'MassageSeacubus_rei.physics3.json');
-  const sourceCdi = path.join(sourceDir, 'MassageSeacubus_rei.cdi3.json');
-  const sourceTextureDir = path.join(sourceDir, 'MassageSeacubus_rei.4096');
+  assertDirectory(primaryRoot, 'Primary Live2D directory');
+  assertDirectory(fallbackRoot, 'Live2D fallback directory');
 
-  for (const [file, label] of [
-    [sourceModel, 'Source model3.json'],
-    [sourceMoc, 'Source MOC3'],
-    [sourcePhysics, 'Source physics3.json'],
-    [sourceCdi, 'Source cdi3.json'],
-  ]) assertFile(file, label);
+  const requiredFiles = [
+    `${modelName}.model3.json`,
+    `${modelName}.moc3`,
+    `${modelName}.physics3.json`,
+    `${modelName}.cdi3.json`,
+    `${modelName}.4096/texture_00.png`,
+  ];
 
-  const textures = validateTextureSet(sourceTextureDir);
-
-  fs.rmSync(publicDir, { recursive: true, force: true });
-  fs.mkdirSync(publicDir, { recursive: true });
-
-  copyBinary(sourceModel, path.join(publicDir, 'MassageSeacubus_rei.model3.json'));
-  copyBinary(sourceMoc, path.join(publicDir, 'MassageSeacubus_rei.moc3'));
-  copyBinary(sourcePhysics, path.join(publicDir, 'MassageSeacubus_rei.physics3.json'));
-  copyBinary(sourceCdi, path.join(publicDir, 'MassageSeacubus_rei.cdi3.json'));
-
-  const publicTextureDir = path.join(publicDir, 'MassageSeacubus_rei.4096');
-  for (const name of textures) {
-    copyBinary(path.join(sourceTextureDir, name), path.join(publicTextureDir, name));
+  for (const relativePath of requiredFiles) {
+    copyIfMissing(primaryRoot, fallbackRoot, relativePath);
   }
 
-  // Preserve every expression and motion shipped with the original package.
-  const animationFiles = fs.readdirSync(sourceDir).filter(name =>
-    /\.(?:exp3\.json|motion3\.json)$/i.test(name)
-  );
-  for (const name of animationFiles) {
-    copyBinary(path.join(sourceDir, name), path.join(publicDir, name));
+  // Expressions and motions referenced by the primary model are also fallback-only.
+  const modelFile = path.join(primaryRoot, `${modelName}.model3.json`);
+  const model = JSON.parse(fs.readFileSync(modelFile, 'utf8'));
+  const referenced = new Set();
+  const refs = model.FileReferences || {};
+  if (Array.isArray(refs.Expressions)) {
+    for (const expression of refs.Expressions) if (expression.File) referenced.add(expression.File);
   }
+  if (refs.Motions) {
+    for (const group of Object.values(refs.Motions)) {
+      if (Array.isArray(group)) for (const motion of group) if (motion.File) referenced.add(motion.File);
+    }
+  }
+  for (const relativePath of referenced) copyIfMissing(primaryRoot, fallbackRoot, relativePath);
 
-  validateMoc3(fs.readFileSync(path.join(publicDir, 'MassageSeacubus_rei.moc3')), path.join(publicDir, 'MassageSeacubus_rei.moc3'));
-  validateTextureSet(publicTextureDir);
+  const mocPath = path.join(primaryRoot, `${modelName}.moc3`);
+  const textureDir = path.join(primaryRoot, `${modelName}.4096`);
+  validateMoc3(fs.readFileSync(mocPath), mocPath);
+  const textures = validateTextureSet(textureDir);
 
-  console.log('[Live2D Auto-Restore] 海魔完整版 / MassageSeacubus_rei restored.');
-  console.log(`  MOC3 : ${fs.statSync(path.join(publicDir, 'MassageSeacubus_rei.moc3')).size} bytes`);
+  console.log('[Live2D Auto-Restore] Primary: public/live2d');
+  console.log('[Live2D Auto-Restore] Fallback: 海魔完整版/MassageSeacubus_full_rei');
+  console.log(`  MOC3: ${fs.statSync(mocPath).size} bytes`);
   console.log(`  Textures: ${textures.length}`);
-  console.log(`  Expressions/Motions: ${animationFiles.length}`);
-  console.log('  Native texture files preserved byte-for-byte; no resize/recompression.');
+  console.log('  Existing live2d assets preserved; fallback used only when missing.');
+  console.log('  Native texture files preserved; no resize/recompression.');
 }
 
 try { restoreAssets(); }
