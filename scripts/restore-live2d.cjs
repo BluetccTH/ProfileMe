@@ -4,7 +4,9 @@ const path = require('path');
 function cleanBase64(value) {
   return value
     .replace(/^\uFEFF/, '')
-    .replace(/\s+/g, '');
+    .replace(/\r?\n/g, '')
+    .replace(/\s+/g, '')
+    .trim();
 }
 
 function decodeBase64File(filePath) {
@@ -13,26 +15,38 @@ function decodeBase64File(filePath) {
   }
 
   const raw = fs.readFileSync(filePath, 'utf8');
-  const cleaned = cleanBase64(raw);
+  let cleaned = cleanBase64(raw);
 
   if (!cleaned) {
-    throw new Error(`Base64 file is empty: ${filePath}`);
-  }
-
-  // Base64 length must be divisible by 4
-  if (cleaned.length % 4 !== 0) {
     throw new Error(
-      `Invalid Base64 length in ${path.basename(filePath)}: ${cleaned.length}`
+      `Base64 file is empty: ${path.basename(filePath)}`
     );
   }
 
-  // Detect accidental data-url prefix
-  const normalized = cleaned.replace(
+  // Remove accidental data URI prefix
+  cleaned = cleaned.replace(
     /^data:[^;]+;base64,/i,
     ''
   );
 
-  const buffer = Buffer.from(normalized, 'base64');
+  // Only valid Base64 characters are allowed.
+  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(cleaned)) {
+    throw new Error(
+      `Invalid Base64 characters in ${path.basename(filePath)}`
+    );
+  }
+
+  const remainder = cleaned.length % 4;
+
+  if (remainder !== 0) {
+    throw new Error(
+      `Invalid Base64 length in ${path.basename(filePath)}: ${cleaned.length} ` +
+      `(length must be divisible by 4). ` +
+      `The Base64 file is probably truncated or corrupted.`
+    );
+  }
+
+  const buffer = Buffer.from(cleaned, 'base64');
 
   if (!buffer.length) {
     throw new Error(
@@ -43,71 +57,58 @@ function decodeBase64File(filePath) {
   return buffer;
 }
 
-function validateMoc3(buffer, filePath) {
-  // Live2D Cubism MOC3 starts with ASCII "MOC3"
-  const magic = buffer.subarray(0, 4).toString('ascii');
+function validateMoc3(buffer, sourcePath) {
+  if (buffer.length < 64) {
+    throw new Error(
+      `.moc3 file is too small: ${buffer.length} bytes`
+    );
+  }
+
+  const magic = buffer
+    .subarray(0, 4)
+    .toString('ascii');
 
   if (magic !== 'MOC3') {
-    const hex = buffer
+    const firstBytes = buffer
       .subarray(0, 16)
       .toString('hex')
       .match(/.{1,2}/g)
       ?.join(' ') || '';
 
     throw new Error(
-      `.moc3 validation failed: ${path.basename(filePath)}\n` +
+      `.moc3 validation failed for ${path.basename(sourcePath)}\n` +
       `Expected header: MOC3\n` +
       `Actual header: ${JSON.stringify(magic)}\n` +
-      `First bytes: ${hex}`
-    );
-  }
-
-  if (buffer.length < 64) {
-    throw new Error(
-      `.moc3 file is suspiciously small: ${buffer.length} bytes`
+      `First bytes: ${firstBytes}`
     );
   }
 }
 
-function validatePng(buffer, filePath) {
+function validatePng(buffer, sourcePath) {
   const pngSignature = Buffer.from([
-    0x89,
-    0x50,
-    0x4E,
-    0x47,
-    0x0D,
-    0x0A,
-    0x1A,
-    0x0A
+    0x89, 0x50, 0x4E, 0x47,
+    0x0D, 0x0A, 0x1A, 0x0A
   ]);
+
+  if (buffer.length < 100) {
+    throw new Error(
+      `.png file is too small: ${buffer.length} bytes`
+    );
+  }
 
   const signature = buffer.subarray(0, 8);
 
   if (!signature.equals(pngSignature)) {
-    const hex = signature.toString('hex')
-      .match(/.{1,2}/g)
-      ?.join(' ') || '';
-
     throw new Error(
-      `.png validation failed: ${path.basename(filePath)}\n` +
-      `Expected PNG signature: 89 50 4e 47 0d 0a 1a 0a\n` +
-      `Actual signature: ${hex}`
-    );
-  }
-
-  if (buffer.length < 100) {
-    throw new Error(
-      `.png file is suspiciously small: ${buffer.length} bytes`
+      `.png validation failed for ${path.basename(sourcePath)}\n` +
+      `Expected PNG signature: 89504e470d0a1a0a\n` +
+      `Actual signature: ${signature.toString('hex')}`
     );
   }
 }
 
-function sameContent(a, b) {
-  if (a.length !== b.length) {
-    return false;
-  }
-
-  return a.equals(b);
+function buffersAreIdentical(a, b) {
+  return a.length === b.length && a.equals(b);
 }
 
 function writeBinary(filePath, buffer) {
@@ -166,75 +167,53 @@ function restoreAssets() {
   // Validate
   // -----------------------------------------
 
-  validateMoc3(
-    mocBin,
-    mocPath
-  );
-
-  validatePng(
-    texBin,
-    texPath
-  );
+  validateMoc3(mocBin, mocPath);
+  validatePng(texBin, texPath);
 
   // -----------------------------------------
-  // Detect obviously wrong source data
+  // Make sure the two files are actually different
   // -----------------------------------------
 
-  if (sameContent(mocBin, texBin)) {
+  if (buffersAreIdentical(mocBin, texBin)) {
     throw new Error(
       'CRITICAL: moc3_base64.txt and texture_base64.txt decode to identical binary data. ' +
-      'The Base64 source files are wrong or duplicated.'
+      'The source Base64 files are duplicated or mapped incorrectly.'
     );
   }
 
   // -----------------------------------------
-  // Paths
+  // Output paths
   // -----------------------------------------
 
-  const publicLive2D = path.resolve(
+  const publicDir = path.resolve(
     __dirname,
     '../public/live2d'
   );
 
   const publicMoc = path.join(
-    publicLive2D,
+    publicDir,
     'MassageSeacubus_rei.moc3'
   );
 
   const publicTex = path.join(
-    publicLive2D,
+    publicDir,
     'MassageSeacubus_rei.4096',
     'texture_00.png'
   );
 
   // -----------------------------------------
-  // Write public
+  // Write public assets
   // -----------------------------------------
 
-  writeBinary(
-    publicMoc,
-    mocBin
-  );
-
-  writeBinary(
-    publicTex,
-    texBin
-  );
+  writeBinary(publicMoc, mocBin);
+  writeBinary(publicTex, texBin);
 
   console.log(
-    '[Live2D Auto-Restore] Wrote public assets:'
-  );
-
-  console.log(
-    `  MOC3 : ${publicMoc}`
-  );
-
-  console.log(
-    `  PNG  : ${publicTex}`
+    '[Live2D Auto-Restore] Public assets written.'
   );
 
   // -----------------------------------------
-  // Write dist if it exists
+  // Write dist assets if dist exists
   // -----------------------------------------
 
   const distDir = path.resolve(
@@ -243,47 +222,29 @@ function restoreAssets() {
   );
 
   if (fs.existsSync(distDir)) {
-    const distLive2D = path.join(
-      distDir,
-      'live2d'
-    );
-
     const distMoc = path.join(
-      distLive2D,
+      distDir,
+      'live2d',
       'MassageSeacubus_rei.moc3'
     );
 
     const distTex = path.join(
-      distLive2D,
+      distDir,
+      'live2d',
       'MassageSeacubus_rei.4096',
       'texture_00.png'
     );
 
-    writeBinary(
-      distMoc,
-      mocBin
-    );
-
-    writeBinary(
-      distTex,
-      texBin
-    );
+    writeBinary(distMoc, mocBin);
+    writeBinary(distTex, texBin);
 
     console.log(
-      '[Live2D Auto-Restore] Wrote dist assets:'
-    );
-
-    console.log(
-      `  MOC3 : ${distMoc}`
-    );
-
-    console.log(
-      `  PNG  : ${distTex}`
+      '[Live2D Auto-Restore] Dist assets written.'
     );
   }
 
   // -----------------------------------------
-  // Final summary
+  // Final verification
   // -----------------------------------------
 
   console.log('');
