@@ -1,10 +1,8 @@
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
 
 const MODEL = 'MassageSeacubus_rei';
-const ORIGINAL_MOC3 = path.resolve(__dirname, '../海魔完整版/MassageSeacubus_full_rei/MassageSeacubus_rei.moc3');
-const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x0d, 0x0a, 0x1a, 0x0a]);
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 function assertFile(filePath, label) {
   if (!fs.existsSync(filePath)) throw new Error(`${label} not found: ${filePath}`);
@@ -17,20 +15,6 @@ function assertDirectory(dirPath, label) {
   if (!fs.statSync(dirPath).isDirectory()) throw new Error(`${label} is not a directory: ${dirPath}`);
 }
 
-function sha256(filePath) {
-  return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
-}
-
-function restoreOriginalMoc3(root) {
-  assertFile(ORIGINAL_MOC3, 'Original MOC3 source');
-  const destination = path.join(root, `${MODEL}.moc3`);
-  fs.copyFileSync(ORIGINAL_MOC3, destination);
-  console.log('[Live2D] Restored MOC3 from original binary source.');
-  console.log(`  Source: ${ORIGINAL_MOC3}`);
-  console.log(`  Size: ${fs.statSync(destination).size} bytes`);
-  console.log(`  SHA-256: ${sha256(destination)}`);
-}
-
 function validateMoc3(filePath) {
   const buffer = fs.readFileSync(filePath);
   if (buffer.length < 64) throw new Error(`MOC3 is too small: ${filePath}`);
@@ -41,7 +25,7 @@ function validateMoc3(filePath) {
 
 function validatePng(filePath) {
   const buffer = fs.readFileSync(filePath);
-  if (buffer.length < 8 || !buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) {
+  if (buffer.length < PNG_SIGNATURE.length || !buffer.subarray(0, 8).equals(PNG_SIGNATURE)) {
     const header = buffer.subarray(0, 16).toString('hex').match(/.{1,2}/g)?.join(' ') || '(empty)';
     throw new Error(`PNG signature is invalid: ${filePath}\nFirst bytes: ${header}`);
   }
@@ -78,10 +62,8 @@ function validateSource() {
   const root = path.resolve(__dirname, '../public/live2d');
   assertDirectory(root, 'Live2D source directory');
 
-  // The complete original binary is the canonical MOC3 source. Do not rebuild,
-  // decode Base64, resize, recompress, or otherwise transform it.
-  restoreOriginalMoc3(root);
-
+  // public/live2d is the canonical source of truth. Never replace its binary
+  // assets with another copy from the repository and never regenerate them.
   const modelPath = path.join(root, `${MODEL}.model3.json`);
   const mocPath = path.join(root, `${MODEL}.moc3`);
   const physicsPath = path.join(root, `${MODEL}.physics3.json`);
@@ -104,8 +86,8 @@ function validateSource() {
     console.log(`  PNG signature OK: ${texture} (${fs.statSync(texturePath).size} bytes)`);
   }
 
-  console.log('[Live2D] Source of truth: original binary under 海魔完整版/MassageSeacubus_full_rei');
-  console.log('[Live2D] MOC3 copying: ENABLED (binary copy only)');
+  console.log('[Live2D] Source of truth: public/live2d');
+  console.log('[Live2D] Asset copying/modification: DISABLED');
   console.log(`  Model: ${MODEL}`);
   console.log(`  MOC3: ${fs.statSync(mocPath).size} bytes`);
   console.log(`  PNG textures: ${textures.length}`);
