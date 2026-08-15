@@ -50,18 +50,20 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Verify deployed Live2D assets
+      - name: Verify built Live2D assets
         run: |
           set -e
-          ROOT="dist/live2d/MassageSeacubus_rei"
+          # Vite copies public/ verbatim to the root of dist/.
+          ROOT="dist/live2d"
           test -f "$ROOT/MassageSeacubus_rei.model3.json"
           test -f "$ROOT/MassageSeacubus_rei.moc3"
           test -f "$ROOT/MassageSeacubus_rei.physics3.json"
           test -f "$ROOT/MassageSeacubus_rei.cdi3.json"
+          test -d "$ROOT/MassageSeacubus_rei.4096"
           test -f "$ROOT/MassageSeacubus_rei.4096/texture_00.png"
-          echo "=== Deployed primary model ==="
+          echo "=== Built primary model ==="
           ls -lh "$ROOT/MassageSeacubus_rei.moc3"
-          echo "=== Deployed native texture ==="
+          echo "=== Built native texture ==="
           ls -lh "$ROOT/MassageSeacubus_rei.4096/texture_00.png"
           echo "public/live2d deployed without texture resize/recompression."
 
