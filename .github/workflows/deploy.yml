@@ -14,23 +14,28 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+env:
+  NODE_VERSION: 22
+
 jobs:
   deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
       - name: Install dependencies
@@ -45,22 +50,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
-          MODEL="dist/live2d/MassageSeacubus_rei.model3.json"
-          MOC="dist/live2d/MassageSeacubus_rei.moc3"
-          TEXTURE="dist/live2d/MassageSeacubus_rei.4096/texture_00.png"
-          PHYSICS="dist/live2d/MassageSeacubus_rei.physics3.json"
+          ROOT="dist/live2d"
+          MODEL="$ROOT/MassageSeacubus_rei.model3.json"
+          MOC="$ROOT/MassageSeacubus_rei.moc3"
+          TEXTURE="$ROOT/MassageSeacubus_rei.4096/texture_00.png"
+          PHYSICS="$ROOT/MassageSeacubus_rei.physics3.json"
 
           for file in "$MODEL" "$MOC" "$TEXTURE" "$PHYSICS"; do
-            test -s "$file" || { echo "Missing or empty Live2D asset: $file"; exit 1; }
+            test -s "$file" || { echo "Missing or empty asset: $file"; exit 1; }
           done
 
-          MOC_HEADER="$(head -c 4 "$MOC")"
-          test "$MOC_HEADER" = "MOC3" || { echo "Invalid MOC3 header"; exit 1; }
-
-          echo "=== Live2D assets ==="
+          test "$(head -c 4 "$MOC")" = "MOC3" || { echo "Invalid MOC3 header"; exit 1; }
+          echo "Live2D assets verified."
           ls -lh "$MODEL" "$MOC" "$TEXTURE" "$PHYSICS"
-          echo "Live2D asset verification passed."
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -69,7 +71,7 @@ jobs:
         uses: actions/upload-pages-artifact@v4
         with:
           path: ./dist
-          compression-level: 0
+          retention-days: 1
 
       - name: Deploy to GitHub Pages
         id: deployment
