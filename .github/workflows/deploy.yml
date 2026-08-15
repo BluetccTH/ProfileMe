@@ -42,8 +42,6 @@ jobs:
           echo "=== App import ==="
           grep -n "Live2DAvatar" src/App.tsx || true
 
-      # Remove any artificial PixiJS ticker FPS cap in the production build.
-      # PixiJS maxFPS=0 means uncapped; the actual limit is the browser/display refresh rate.
       - name: Enable uncapped Live2D/Pixi FPS
         run: |
           python - <<'PY'
@@ -74,9 +72,9 @@ jobs:
       - name: Build
         run: npm run build
 
-      # Keep the original Live2D texture at its native maximum: 4096x4096.
-      # Do not downscale the model texture during deployment.
-      - name: Verify Live2D texture (max 4096px)
+      # The model's native texture is 4096x8192 (not 4096x4096).
+      # Keep the original native texture intact; only reject textures larger than 8192px.
+      - name: Verify Live2D texture (native 4096x8192)
         run: |
           set -e
           TEXTURE="dist/live2d/MassageSeacubus_rei.4096/texture_00.png"
@@ -98,10 +96,14 @@ jobs:
               width, height = image.size
               print(f"Live2D texture dimensions: {width}x{height}")
               print(f"Live2D texture size: {path.stat().st_size} bytes")
-              if width > 4096 or height > 4096:
-                  raise SystemExit("ERROR: Live2D texture exceeds 4096px")
-              if width != 4096 or height != 4096:
-                  print("WARNING: texture is below native 4096x4096 resolution")
+
+              # This model is natively 4096x8192. Preserve it instead of
+              # incorrectly rejecting the second dimension.
+              if width > 4096 or height > 8192:
+                  raise SystemExit("ERROR: Live2D texture exceeds native 4096x8192 limit")
+
+              if width != 4096 or height != 8192:
+                  print("WARNING: texture dimensions differ from the model's native 4096x8192 texture")
           PY
 
           echo "=== Live2D files in dist ==="
