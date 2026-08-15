@@ -80,7 +80,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node scripts/restore-live2d.cjs
           node - <<'NODE'
           const fs = require('fs');
           const path = require('path');
@@ -88,16 +87,35 @@ jobs:
           const modelPath = path.join(root, 'MassageSeacubus_rei.model3.json');
           const model = JSON.parse(fs.readFileSync(modelPath, 'utf8'));
           const refs = model.FileReferences || {};
-          const refsToCheck = new Set([refs.Moc, refs.Physics, refs.Pose, refs.DisplayInfo]);
-          for (const file of refs.Textures || []) refsToCheck.add(file);
-          for (const expression of refs.Expressions || []) if (expression?.File) refsToCheck.add(expression.File);
+          const refsToCheck = new Set();
+          const addRef = (value) => {
+            if (typeof value === 'string' && value.length > 0) refsToCheck.add(value);
+          };
+
+          addRef(refs.Moc);
+          addRef(refs.Physics);
+          addRef(refs.Pose);
+          addRef(refs.DisplayInfo);
+          for (const file of Array.isArray(refs.Textures) ? refs.Textures : []) addRef(file);
+          for (const expression of Array.isArray(refs.Expressions) ? refs.Expressions : []) addRef(expression?.File);
           for (const group of Object.values(refs.Motions || {})) {
-            for (const motion of Array.isArray(group) ? group : []) if (motion?.File) refsToCheck.add(motion.File);
+            for (const motion of Array.isArray(group) ? group : []) addRef(motion?.File);
           }
+
+          if (refs.Moc !== 'MassageSeacubus_rei.moc3') {
+            throw new Error(`Unexpected MOC3 reference: ${refs.Moc || '(missing)'}`);
+          }
+
+          const mocPath = path.join(root, 'MassageSeacubus_rei.moc3');
+          const mocSize = fs.statSync(mocPath).size;
+          if (mocSize !== 2628790) throw new Error(`MOC3 size mismatch: expected 2628790, got ${mocSize}`);
+
           for (const file of refsToCheck) {
-            if (!file || file.startsWith('/') || file.includes('..')) throw new Error(`Unsafe reference: ${file}`);
+            if (file.startsWith('/') || file.includes('..')) throw new Error(`Unsafe reference: ${file}`);
             const full = path.resolve(root, file);
-            if (!fs.existsSync(full) || !fs.statSync(full).isFile()) throw new Error(`Missing referenced Live2D asset: ${file}`);
+            if (!full.startsWith(`${root}${path.sep}`) || !fs.existsSync(full) || !fs.statSync(full).isFile()) {
+              throw new Error(`Missing referenced Live2D asset: ${file}`);
+            }
           }
           console.log(`Verified ${refsToCheck.size} referenced Live2D files in public/live2d.`);
           NODE
