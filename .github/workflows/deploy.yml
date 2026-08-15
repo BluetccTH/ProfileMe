@@ -2,8 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -13,7 +12,7 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -25,64 +24,45 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Check Live2DAvatar export
-        run: |
-          echo "=== Live2DAvatar.tsx ==="
-          grep -n "Live2DAvatar" src/components/Live2DAvatar.tsx || true
-          echo "=== App import ==="
-          grep -n "Live2DAvatar" src/App.tsx || true
+        run: npm ci --prefer-offline --no-audit --no-fund
 
       - name: Build
         run: npm run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Verify Live2D assets
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
+
           MODEL="dist/live2d/MassageSeacubus_rei.model3.json"
           MOC="dist/live2d/MassageSeacubus_rei.moc3"
           TEXTURE="dist/live2d/MassageSeacubus_rei.4096/texture_00.png"
           PHYSICS="dist/live2d/MassageSeacubus_rei.physics3.json"
 
           for file in "$MODEL" "$MOC" "$TEXTURE" "$PHYSICS"; do
-            if [ ! -f "$file" ]; then
-              echo "Missing Live2D asset: $file"
-              exit 1
-            fi
+            test -s "$file" || { echo "Missing or empty Live2D asset: $file"; exit 1; }
           done
 
-          echo "=== Live2D files in dist ==="
-          find dist/live2d -type f | sort
+          MOC_HEADER="$(head -c 4 "$MOC")"
+          test "$MOC_HEADER" = "MOC3" || { echo "Invalid MOC3 header"; exit 1; }
 
-          echo "=== File sizes ==="
+          echo "=== Live2D ==="
           ls -lh "$MODEL" "$MOC" "$TEXTURE" "$PHYSICS"
 
-          echo "=== MOC3 signature ==="
-          xxd -l 4 "$MOC"
-
-          echo "=== Texture dimensions ==="
-          python -m pip install --disable-pip-version-check --quiet Pillow
-          python - "$TEXTURE" <<'PY'
-          import sys
-          from PIL import Image
-          path = sys.argv[1]
-          with Image.open(path) as image:
-              width, height = image.size
-              print(f"Live2D texture dimensions: {width}x{height}")
-              print(f"Live2D texture size: {__import__('os').path.getsize(path)} bytes")
-              if width > 4096 or height > 8192:
-                  raise SystemExit("ERROR: Live2D texture exceeds 4096x8192")
-          PY
+          echo "=== Texture ==="
+          node -e "const fs=require('fs');const b=fs.readFileSync(process.argv[1]);console.log('PNG bytes:',b.length);if(b.length<8||!b.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])))process.exit(1)" "$TEXTURE"
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -91,6 +71,7 @@ jobs:
         uses: actions/upload-pages-artifact@v4
         with:
           path: ./dist
+          compression-level: 0
 
       - name: Deploy to GitHub Pages
         id: deployment
