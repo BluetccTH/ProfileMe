@@ -3,7 +3,7 @@ const path = require('path');
 
 const PNG_SIGNATURE = Buffer.from([
   0x89, 0x50, 0x4e, 0x47,
-  0x0d, 0x0a, 0x1a, 0x0a
+  0x0d, 0x0a, 0x1a, 0x0a,
 ]);
 
 function assertFile(filePath, label) {
@@ -45,91 +45,77 @@ function validatePng(buffer, filePath) {
   }
 }
 
-function writeBinary(filePath, buffer) {
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, buffer);
-}
-
-function normalizePng(buffer, filePath) {
-  // A previous UTF-8/text edit converted the first PNG byte 0x89 into the
-  // three-byte UTF-8 replacement character EF BF BD. Restore that byte only.
-  const corruptedPrefix = Buffer.from([0xef, 0xbf, 0xbd, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-
-  if (buffer.subarray(0, corruptedPrefix.length).equals(corruptedPrefix)) {
-    console.warn(
-      `[Live2D Auto-Restore] Repairing UTF-8 replacement-character prefix in ${path.basename(filePath)}.`
-    );
-    return Buffer.concat([
-      PNG_SIGNATURE,
-      buffer.subarray(corruptedPrefix.length)
-    ]);
-  }
-
-  // Another attempted repair removed the replacement character entirely,
-  // leaving the PNG signature as 50 4E 47.... Restore the missing 0x89.
-  const missingFirstByte = Buffer.from([0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-
-  if (buffer.subarray(0, missingFirstByte.length).equals(missingFirstByte)) {
-    console.warn(
-      `[Live2D Auto-Restore] Repairing missing PNG signature byte in ${path.basename(filePath)}.`
-    );
-    return Buffer.concat([
-      Buffer.from([0x89]),
-      buffer
-    ]);
-  }
-
-  return buffer;
+function copyBinary(source, destination) {
+  fs.mkdirSync(path.dirname(destination), { recursive: true });
+  fs.copyFileSync(source, destination);
 }
 
 function restoreAssets() {
-  const live2dDir = path.resolve(__dirname, '../public/live2d');
-
-  const mocPath = path.join(
-    live2dDir,
-    'MassageSeacubus_rei.moc3'
+  // Use the original tracked Live2D binaries directly.
+  // Do NOT reconstruct .moc3/.png from Base64 text: those text files were
+  // truncated/corrupted and caused invalid Core model data and PNG headers.
+  const sourceDir = path.resolve(
+    __dirname,
+    '../海魔完整版/MassageSeacubus_full_rei'
   );
 
-  const pngPath = path.join(
-    live2dDir,
+  const publicDir = path.resolve(__dirname, '../public/live2d');
+  const sourceMoc = path.join(sourceDir, 'MassageSeacubus_rei.moc3');
+  const sourcePng = path.join(
+    sourceDir,
     'MassageSeacubus_rei.4096/texture_00.png'
   );
+  const sourceModel = path.join(sourceDir, 'MassageSeacubus_rei.model3.json');
+  const sourcePhysics = path.join(sourceDir, 'MassageSeacubus_rei.physics3.json');
+  const sourceCdi = path.join(sourceDir, 'MassageSeacubus_rei.cdi3.json');
 
-  const originalPngPath = path.join(
-    live2dDir,
-    'MassageSeacubus_rei.4096/texture_00_orig.png'
+  for (const [file, label] of [
+    [sourceMoc, 'Source MOC3'],
+    [sourcePng, 'Source PNG'],
+    [sourceModel, 'Source model3.json'],
+    [sourcePhysics, 'Source physics3.json'],
+    [sourceCdi, 'Source cdi3.json'],
+  ]) {
+    assertFile(file, label);
+  }
+
+  const publicMoc = path.join(publicDir, 'MassageSeacubus_rei.moc3');
+  const publicPng = path.join(
+    publicDir,
+    'MassageSeacubus_rei.4096/texture_00.png'
   );
+  const publicModel = path.join(publicDir, 'MassageSeacubus_rei.model3.json');
+  const publicPhysics = path.join(publicDir, 'MassageSeacubus_rei.physics3.json');
+  const publicCdi = path.join(publicDir, 'MassageSeacubus_rei.cdi3.json');
 
-  assertFile(mocPath, 'MOC3 source');
-  assertFile(originalPngPath, 'Original PNG source');
+  copyBinary(sourceMoc, publicMoc);
+  copyBinary(sourcePng, publicPng);
+  copyBinary(sourceModel, publicModel);
+  copyBinary(sourcePhysics, publicPhysics);
+  copyBinary(sourceCdi, publicCdi);
 
-  const mocBin = fs.readFileSync(mocPath);
-  const pngSource = fs.readFileSync(originalPngPath);
-  const pngBin = normalizePng(pngSource, originalPngPath);
+  const mocBin = fs.readFileSync(publicMoc);
+  const pngBin = fs.readFileSync(publicPng);
 
-  validateMoc3(mocBin, mocPath);
-  validatePng(pngBin, originalPngPath);
+  validateMoc3(mocBin, publicMoc);
+  validatePng(pngBin, publicPng);
 
   if (mocBin.equals(pngBin)) {
     throw new Error('CRITICAL: MOC3 and PNG are identical binaries.');
   }
 
-  writeBinary(pngPath, pngBin);
+  const sourceMocBin = fs.readFileSync(sourceMoc);
+  const sourcePngBin = fs.readFileSync(sourcePng);
 
-  // Verify the actual public files, not just the in-memory buffers.
-  const restoredMoc = fs.readFileSync(mocPath);
-  const restoredPng = fs.readFileSync(pngPath);
-  validateMoc3(restoredMoc, mocPath);
-  validatePng(restoredPng, pngPath);
-
-  if (!restoredMoc.equals(mocBin) || !restoredPng.equals(pngBin)) {
-    throw new Error('CRITICAL: public Live2D binaries differ from validated source binaries.');
+  if (!mocBin.equals(sourceMocBin) || !pngBin.equals(sourcePngBin)) {
+    throw new Error('CRITICAL: public Live2D binaries differ from the original tracked binaries.');
   }
 
-  console.log('[Live2D Auto-Restore] Source binaries are valid.');
+  console.log('[Live2D Auto-Restore] Original tracked Live2D binaries copied.');
   console.log(`  MOC3 : ${mocBin.length} bytes`);
   console.log(`  PNG  : ${pngBin.length} bytes`);
-  console.log(`  PNG header: ${pngBin.subarray(0, 8).toString('hex')}`);
+  console.log(`  MOC3 header: ${mocBin.subarray(0, 4).toString('ascii')}`);
+  console.log(`  PNG header : ${pngBin.subarray(0, 8).toString('hex')}`);
 
   const distDir = path.resolve(__dirname, '../dist');
 
@@ -138,14 +124,28 @@ function restoreAssets() {
       distDir,
       'live2d/MassageSeacubus_rei.moc3'
     );
-
     const distPng = path.join(
       distDir,
       'live2d/MassageSeacubus_rei.4096/texture_00.png'
     );
+    const distModel = path.join(
+      distDir,
+      'live2d/MassageSeacubus_rei.model3.json'
+    );
+    const distPhysics = path.join(
+      distDir,
+      'live2d/MassageSeacubus_rei.physics3.json'
+    );
+    const distCdi = path.join(
+      distDir,
+      'live2d/MassageSeacubus_rei.cdi3.json'
+    );
 
-    writeBinary(distMoc, mocBin);
-    writeBinary(distPng, pngBin);
+    copyBinary(publicMoc, distMoc);
+    copyBinary(publicPng, distPng);
+    copyBinary(publicModel, distModel);
+    copyBinary(publicPhysics, distPhysics);
+    copyBinary(publicCdi, distCdi);
 
     const deployedMoc = fs.readFileSync(distMoc);
     const deployedPng = fs.readFileSync(distPng);
@@ -154,9 +154,7 @@ function restoreAssets() {
     validatePng(deployedPng, distPng);
 
     if (!deployedMoc.equals(mocBin) || !deployedPng.equals(pngBin)) {
-      throw new Error(
-        'CRITICAL: dist Live2D binaries differ from source binaries.'
-      );
+      throw new Error('CRITICAL: dist Live2D binaries differ from public source binaries.');
     }
 
     console.log('[Live2D Auto-Restore] Dist binaries verified.');
