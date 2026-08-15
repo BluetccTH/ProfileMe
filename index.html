@@ -9,7 +9,10 @@
 <meta name="description" content="Modern Cyber Portfolio • Developer • Performance Engineer • Creator">
 <meta name="theme-color" content="#6c63ff">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https:; media-src 'self' blob:; worker-src 'self' blob:; child-src 'self' blob:;">
+<!-- GitHub Pages cannot deliver custom HTTP security headers. Keep the CSP compatible with PixiJS/Cubism.
+     PixiJS v7 requires eval support for its runtime system checks, so unsafe-eval is explicitly limited to scripts
+     from this same origin. frame-ancestors is intentionally omitted because browsers ignore it in meta CSP. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https:; media-src 'self' blob:; worker-src 'self' blob:; child-src 'self' blob:;">
 <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=(), usb=()">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://bluetccth.github.io/ProfileMe/">
