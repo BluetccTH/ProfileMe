@@ -1,29 +1,10 @@
-Skip to content
-BluetccTH
-ProfileMe
-Repository navigation
-Code
-Issues
-Pull requests
-Agents
-Actions
-Projects
-Wiki
-Security and quality
-Insights
-Settings
-Deploy to GitHub Pages
-Fix native Live2D texture validation for 4096x8192 #99
-All jobs
-Run details
-Workflow file for this run
-.github/workflows/deploy.yml at b7e54db
 name: Deploy to GitHub Pages
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -31,7 +12,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: false
 
 jobs:
@@ -39,15 +20,14 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -61,76 +41,54 @@ jobs:
           grep -n "Live2DAvatar" src/components/Live2DAvatar.tsx || true
           echo "=== App import ==="
           grep -n "Live2DAvatar" src/App.tsx || true
-      - name: Enable uncapped Live2D/Pixi FPS
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          path = Path("src/components/Live2DAvatar.tsx")
-          text = path.read_text(encoding="utf-8")
-          marker = 'Live2DModel.registerTicker(PIXI.Ticker);'
-          injection = '''Live2DModel.registerTicker(PIXI.Ticker);
-          // Uncap PixiJS/Live2D ticker FPS. 0 = no artificial FPS limit.
-          // The browser/display refresh rate remains the real upper bound.
-          try {
-            (PIXI.Ticker.shared as any).maxFPS = 0;
-            (PIXI.Ticker.shared as any).minFPS = 0;
-          } catch (e) {}
-          '''
-          if "(PIXI.Ticker.shared as any).maxFPS = 0" not in text:
-              if marker not in text:
-                  raise SystemExit("Could not find Live2D ticker registration marker")
-              path.write_text(text.replace(marker, injection, 1), encoding="utf-8")
-              print("[FPS] Injected uncapped shared Pixi ticker settings")
-          else:
-              print("[FPS] Uncapped ticker settings already present")
-          PY
+
       - name: Build
         run: npm run build
 
-      # The model's native texture is 4096x8192 (not 4096x4096).
-      # Keep the original native texture intact; only reject textures larger than 8192px.
-      - name: Verify Live2D texture (native 4096x8192)
+      - name: Verify Live2D assets
+        shell: bash
         run: |
           set -e
+          MODEL="dist/live2d/MassageSeacubus_rei.model3.json"
+          MOC="dist/live2d/MassageSeacubus_rei.moc3"
           TEXTURE="dist/live2d/MassageSeacubus_rei.4096/texture_00.png"
-          if [ ! -f "$TEXTURE" ]; then
-            echo "Live2D texture not found: $TEXTURE"
-            exit 1
-          fi
+          PHYSICS="dist/live2d/MassageSeacubus_rei.physics3.json"
+
+          for file in "$MODEL" "$MOC" "$TEXTURE" "$PHYSICS"; do
+            if [ ! -f "$file" ]; then
+              echo "Missing Live2D asset: $file"
+              exit 1
+            fi
+          done
+
+          echo "=== Live2D files in dist ==="
+          find dist/live2d -type f | sort
+
+          echo "=== File sizes ==="
+          ls -lh "$MODEL" "$MOC" "$TEXTURE" "$PHYSICS"
+
+          echo "=== MOC3 signature ==="
+          xxd -l 4 "$MOC"
+
+          echo "=== Texture dimensions ==="
           python -m pip install --disable-pip-version-check --quiet Pillow
           python - "$TEXTURE" <<'PY'
           import sys
           from PIL import Image
-          from pathlib import Path
-          path = Path(sys.argv[1])
+          path = sys.argv[1]
           with Image.open(path) as image:
               width, height = image.size
               print(f"Live2D texture dimensions: {width}x{height}")
-              print(f"Live2D texture size: {path.stat().st_size} bytes")
-              # This model is natively 4096x8192. Preserve it instead of
-              # incorrectly rejecting the second dimension.
+              print(f"Live2D texture size: {__import__('os').path.getsize(path)} bytes")
               if width > 4096 or height > 8192:
-                  raise SystemExit("ERROR: Live2D texture exceeds native 4096x8192 limit")
-              if width != 4096 or height != 8192:
-                  print("WARNING: texture dimensions differ from the model's native 4096x8192 texture")
+                  raise SystemExit("ERROR: Live2D texture exceeds 4096x8192")
           PY
-          echo "=== Live2D files in dist ==="
-          find dist -type f \( \
-            -name "*.model3.json" \
-            -o -name "*.moc3" \
-            -o -name "*.png" \
-            -o -name "*.physics3.json" \
-          \) | sort
-          echo "=== File sizes ==="
-          find dist -type f \( \
-            -name "*.moc3" \
-            -o -name "*.png" \
-          \) -exec ls -lh {} \;
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: ./dist
 
