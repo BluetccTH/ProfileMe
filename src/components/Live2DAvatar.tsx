@@ -4,13 +4,9 @@ import { Eye, RefreshCw, Smile, Sparkles, Info } from "lucide-react";
 const resolveAssetUrl = (assetPath: string): string => {
   if (!assetPath) return "";
   if (/^(https?:|data:|blob:)/.test(assetPath)) return assetPath;
-  const base = ((import.meta as any).env?.BASE_URL || "./").replace(/\/?$/, "/");
+  const base = ((import.meta as any).env?.BASE_URL || "/").replace(/\/?$/, "/");
   const clean = assetPath.replace(/^\.\//, "").replace(/^\//, "");
-  try {
-    const loc = new URL(window.location.href);
-    if (!loc.pathname.endsWith("/") && !loc.pathname.split("/").pop()?.includes(".")) loc.pathname += "/";
-    return new URL(clean, new URL(base, loc)).href;
-  } catch { return `./${clean}`; }
+  return new URL(clean, new URL(base, window.location.origin + "/")).href;
 };
 
 interface Live2DAvatarProps { className?: string; onLoaded?: () => void; width?: number; height?: number; interactive?: boolean; }
@@ -31,52 +27,83 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({ className = "", onLo
     destroyedRef.current = false;
     let app: any = null;
     let raf = 0;
+
     const init = async () => {
       try {
-        setLoading(true); setError(null);
+        setLoading(true);
+        setError(null);
+
         const PIXI = await import("pixi.js");
+
+        // Load Cubism Core from the same GitHub Pages base path.
         if (!(window as any).Live2DCubismCore) {
-          let script = document.querySelector('script[src*="live2dcubismcore"]') as HTMLScriptElement | null;
-          if (!script) { script = document.createElement("script"); script.src = resolveAssetUrl("live2dcubismcore.min.js"); document.head.appendChild(script); }
-          for (let i = 0; i < 60 && !(window as any).Live2DCubismCore; i++) await new Promise(r => setTimeout(r, 100));
+          let script = document.querySelector('script[data-live2d-core="true"]') as HTMLScriptElement | null;
+          if (!script) {
+            script = document.createElement("script");
+            script.dataset.live2dCore = "true";
+            script.src = resolveAssetUrl("live2dcubismcore.min.js");
+            script.async = false;
+            document.head.appendChild(script);
+          }
+          for (let i = 0; i < 100 && !(window as any).Live2DCubismCore; i++) {
+            await new Promise(r => setTimeout(r, 100));
+          }
         }
         if (!(window as any).Live2DCubismCore) throw new Error("Live2DCubismCore not found.");
+
         (window as any).PIXI = PIXI;
-        const { Live2DLoader, Live2DModel } = await import("pixi-live2d-display/cubism4");
+        const { Live2DModel } = await import("pixi-live2d-display/cubism4");
         Live2DModel.registerTicker(PIXI.Ticker);
-        try { (PIXI.Ticker.shared as any).maxFPS = 0; (PIXI.Ticker.shared as any).minFPS = 0; } catch {}
-        Live2DLoader.middlewares = [async (context: any, next: any) => {
-          const raw = context.settings?.resolveURL ? context.settings.resolveURL(context.url) : context.url;
-          const url = resolveAssetUrl(raw);
-          const res = await fetch(url);
-          if (!res.ok) throw new Error(`Failed to load ${url} (${res.status})`);
-          if (context.type === "json") context.result = await res.json();
-          else if (context.type === "arraybuffer") {
-            const data = await res.arrayBuffer();
-            if (url.toLowerCase().endsWith(".moc3")) {
-              const magic = String.fromCharCode(...new Uint8Array(data, 0, 4));
-              if (magic !== "MOC3") throw new Error(`Invalid MOC3: ${url}`);
-            }
-            context.result = data;
-          } else context.result = await res.text();
-          if (next) return next();
-        }];
+        try {
+          (PIXI.Ticker.shared as any).maxFPS = 0;
+          (PIXI.Ticker.shared as any).minFPS = 0;
+        } catch {}
+
         if (!canvasRef.current || !containerRef.current || destroyedRef.current) return;
         const rect = containerRef.current.getBoundingClientRect();
-        const w = rect.width || width, h = rect.height || height;
-        app = new PIXI.Application({ view: canvasRef.current, width: w, height: h, backgroundAlpha: 0, antialias: true, autoDensity: true, resolution: window.devicePixelRatio || 1 });
-        // The public path is generated from the original 海魔完整版 package by restore-live2d.cjs.
-        const model = await Live2DModel.from(resolveAssetUrl("live2d/MassageSeacubus_rei.model3.json"), { autoInteract: false });
-        if (destroyedRef.current) { model.destroy(); app.destroy(true); return; }
+        const w = rect.width || width;
+        const h = rect.height || height;
+
+        app = new PIXI.Application({
+          view: canvasRef.current,
+          width: w,
+          height: h,
+          backgroundAlpha: 0,
+          antialias: true,
+          autoDensity: true,
+          resolution: window.devicePixelRatio || 1,
+        });
+
+        // IMPORTANT: do not replace pixi-live2d-display's resource loader.
+        // Its native loader handles PNG/Image resources and resolves files relative
+        // to the model3.json URL. The previous custom middleware converted images
+        // to text, which caused "Texture loading error" and Cubism "Unknown error".
+        const modelUrl = resolveAssetUrl("live2d/MassageSeacubus_rei.model3.json");
+        const model = await Live2DModel.from(modelUrl, {
+          autoInteract: false,
+          autoUpdate: true,
+        });
+
+        if (destroyedRef.current) {
+          model.destroy();
+          app.destroy(true);
+          return;
+        }
+
         modelRef.current = model;
         const scale = Math.min(w / model.width, h / model.height) * 3.3;
-        model.scale.set(scale); model.anchor.set(0.5, 0.22); model.position.set(w / 2, h * 0.48); app.stage.addChild(model);
+        model.scale.set(scale);
+        model.anchor.set(0.5, 0.22);
+        model.position.set(w / 2, h * 0.48);
+        app.stage.addChild(model);
+
         const tick = () => {
           if (destroyedRef.current || !modelRef.current) return;
           const core = modelRef.current.internalModel?.coreModel;
           if (core) {
             const t = targetRef.current;
-            t.x += (t.tx - t.x) * 0.12; t.y += (t.ty - t.y) * 0.12;
+            t.x += (t.tx - t.x) * 0.12;
+            t.y += (t.ty - t.y) * 0.12;
             core.setParameterValueById("ParamAngleX", t.x * 30);
             core.setParameterValueById("ParamAngleY", -t.y * 25);
             core.setParameterValueById("ParamAngleZ", t.x * t.y * -15);
@@ -87,11 +114,23 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({ className = "", onLo
           raf = requestAnimationFrame(tick);
         };
         raf = requestAnimationFrame(tick);
-        setLoading(false); onLoaded?.();
-      } catch (e: any) { console.error(e); setError(e?.message || "Failed to load Live2D model"); setLoading(false); }
+        setLoading(false);
+        onLoaded?.();
+      } catch (e: any) {
+        console.error("[Live2D] load failed:", e);
+        setError(e?.message || "Failed to load Live2D model");
+        setLoading(false);
+      }
     };
+
     init();
-    return () => { destroyedRef.current = true; cancelAnimationFrame(raf); try { modelRef.current?.destroy({ children: true }); } catch {} try { app?.destroy(true, { children: true, texture: true }); } catch {} modelRef.current = null; };
+    return () => {
+      destroyedRef.current = true;
+      cancelAnimationFrame(raf);
+      try { modelRef.current?.destroy({ children: true }); } catch {}
+      try { app?.destroy(true, { children: true, texture: true }); } catch {}
+      modelRef.current = null;
+    };
   }, [width, height, onLoaded]);
 
   const handleMouse = useCallback((x: number, y: number) => {
@@ -101,8 +140,20 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({ className = "", onLo
     targetRef.current.ty = Math.max(-1, Math.min(1, (y - (r.top + r.height * .4)) / Math.max(window.innerHeight * .45, r.height * 1.5)));
   }, [tracking]);
 
-  useEffect(() => { const fn = (e: MouseEvent) => handleMouse(e.clientX, e.clientY); window.addEventListener("mousemove", fn, { passive: true }); return () => window.removeEventListener("mousemove", fn); }, [handleMouse]);
-  useEffect(() => { if (tracking !== "auto") return; const id = window.setInterval(() => { targetRef.current.tx = (Math.random() - .5) * 1.2; targetRef.current.ty = (Math.random() - .5) * .8; }, 2400); return () => window.clearInterval(id); }, [tracking]);
+  useEffect(() => {
+    const fn = (e: MouseEvent) => handleMouse(e.clientX, e.clientY);
+    window.addEventListener("mousemove", fn, { passive: true });
+    return () => window.removeEventListener("mousemove", fn);
+  }, [handleMouse]);
+
+  useEffect(() => {
+    if (tracking !== "auto") return;
+    const id = window.setInterval(() => {
+      targetRef.current.tx = (Math.random() - .5) * 1.2;
+      targetRef.current.ty = (Math.random() - .5) * .8;
+    }, 2400);
+    return () => window.clearInterval(id);
+  }, [tracking]);
 
   return <div ref={containerRef} className={`relative overflow-hidden rounded-3xl flex flex-col items-center justify-center ${className}`} onClick={() => setClicks(v => v + 1)}>
     <div className="absolute inset-0 bg-gradient-to-b from-[#0b0f19]/80 via-[#0d1224]/70 to-[#070913]/90 border border-blue-500/20 rounded-3xl" />
