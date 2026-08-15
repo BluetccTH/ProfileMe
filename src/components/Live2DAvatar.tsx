@@ -30,7 +30,7 @@ const readVerifiedResponse = async (response: Response, url: string, kind: strin
   return buffer;
 };
 
-const validateLive2DAssets = async (modelUrl: string): Promise<void> => {
+const validateLive2DAssets = async (modelUrl: string): Promise<any> => {
   const modelResponse = await fetch(modelUrl, { cache: "no-store" });
   const modelBuffer = await readVerifiedResponse(modelResponse, modelUrl, "Live2D model JSON");
   const modelType = (modelResponse.headers.get("content-type") || "").toLowerCase();
@@ -76,6 +76,12 @@ const validateLive2DAssets = async (modelUrl: string): Promise<void> => {
       if (png.some((value, index) => bytes[index] !== value)) throw new Error(`PNG signature is invalid: ${relativePath}`);
     }
   }
+
+  // Keep FileReferences byte-for-byte unchanged. The URL is only attached to the
+  // parsed settings object so pixi-live2d-display resolves resources from the model
+  // JSON location instead of from the document URL.
+  model.url = modelUrl;
+  return model;
 };
 
 interface Live2DAvatarProps { className?: string; onLoaded?: () => void; width?: number; height?: number; interactive?: boolean; }
@@ -129,10 +135,10 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({ className = "", onLo
         appRef.current = pixiApp;
 
         const modelUrl = resolveAssetUrl(MODEL_RELATIVE_PATH);
-        await validateLive2DAssets(modelUrl);
-        // Pass the exact verified model URL to pixi-live2d-display. Its Cubism resource
-        // resolver then resolves MOC3/textures relative to the model URL itself.
-        const model = await Live2DModel.from(modelUrl, { autoInteract: false });
+        const modelSettings = await validateLive2DAssets(modelUrl);
+        // Give pixi-live2d-display the verified settings object with the exact model URL.
+        // FileReferences remain untouched; no Blob, encryption, decryption, or URL rewriting.
+        const model = await Live2DModel.from(modelSettings, { autoInteract: false });
         if (destroyedRef.current) { model.destroy(); pixiApp.destroy(true); return; }
         modelRef.current = model;
         const baseScale = Math.min(appWidth / model.width, appHeight / model.height) * 3.3;
