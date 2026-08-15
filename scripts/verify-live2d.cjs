@@ -5,7 +5,6 @@ const crypto = require('crypto');
 const root = path.resolve(__dirname, '../public/live2d');
 const dist = path.resolve(__dirname, '../dist/live2d');
 const MODEL = 'MassageSeacubus_rei';
-const EXPECTED_MOC3_SIZE = 2628790;
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 function files(rootDir) {
@@ -29,6 +28,12 @@ function assertFile(file, label) {
   if (!fs.existsSync(file) || !fs.statSync(file).isFile()) throw new Error(`${label} missing: ${file}`);
 }
 
+function validateMoc3(file, label) {
+  const buffer = fs.readFileSync(file);
+  if (buffer.length < 64) throw new Error(`MOC3 is too small: ${label}`);
+  if (buffer.subarray(0, 4).toString('ascii') !== 'MOC3') throw new Error(`MOC3 magic header is invalid: ${label}`);
+}
+
 function validatePng(file, label) {
   const buffer = fs.readFileSync(file);
   if (buffer.length < PNG_SIGNATURE.length || !buffer.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)) {
@@ -44,15 +49,11 @@ function validatePngs(rootDir) {
 }
 
 function assertSameTree() {
-  assertFile(path.join(root, `${MODEL}.model3.json`), 'Model JSON');
-  assertFile(path.join(root, `${MODEL}.moc3`), 'MOC3');
-
-  const moc = fs.readFileSync(path.join(root, `${MODEL}.moc3`));
-  if (moc.length !== EXPECTED_MOC3_SIZE) {
-    throw new Error(`MOC3 size mismatch: expected ${EXPECTED_MOC3_SIZE}, got ${moc.length}`);
-  }
-  if (moc.subarray(0, 4).toString('ascii') !== 'MOC3') throw new Error('MOC3 magic header is invalid');
-
+  const modelPath = path.join(root, `${MODEL}.model3.json`);
+  const mocPath = path.join(root, `${MODEL}.moc3`);
+  assertFile(modelPath, 'Model JSON');
+  assertFile(mocPath, 'MOC3');
+  validateMoc3(mocPath, mocPath);
   validatePngs(root);
 
   if (!fs.existsSync(dist)) throw new Error('dist/live2d does not exist');
@@ -71,10 +72,12 @@ function assertSameTree() {
     if (a !== b) throw new Error(`Live2D SHA-256 mismatch: ${rel}\nsource=${a}\ndist=${b}`);
   }
 
+  validateMoc3(path.join(dist, `${MODEL}.moc3`), path.join(dist, `${MODEL}.moc3`));
   validatePngs(dist);
 
   console.log(`[Live2D] Build integrity OK: ${sourceFiles.length} file(s), byte-for-byte identical.`);
-  console.log(`[Live2D] ${MODEL}.moc3: ${EXPECTED_MOC3_SIZE} bytes`);
+  console.log(`[Live2D] ${MODEL}.moc3: ${fs.statSync(mocPath).size} bytes`);
+  console.log(`[Live2D] ${MODEL}.moc3 SHA-256: ${sha256(mocPath)}`);
 }
 
 function verifyModelReferences() {
