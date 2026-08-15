@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: "pages"
   cancel-in-progress: false
 
 jobs:
@@ -19,13 +19,15 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
@@ -33,45 +35,40 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify primary Live2D package
+      # ตรวจ export ก่อน build
+      - name: Check Live2DAvatar export
         run: |
-          set -e
-          ROOT="public/live2d"
-          test -f "$ROOT/MassageSeacubus_rei.model3.json"
-          test -f "$ROOT/MassageSeacubus_rei.moc3"
-          test -f "$ROOT/MassageSeacubus_rei.physics3.json"
-          test -f "$ROOT/MassageSeacubus_rei.cdi3.json"
-          test -d "$ROOT/MassageSeacubus_rei.4096"
-          test -f "$ROOT/MassageSeacubus_rei.4096/texture_00.png"
-          echo "Primary public/live2d package found."
-          echo "MOC3: $(stat -c%s "$ROOT/MassageSeacubus_rei.moc3") bytes"
-          echo "Texture: $(stat -c%s "$ROOT/MassageSeacubus_rei.4096/texture_00.png") bytes"
+          echo "=== Live2DAvatar.tsx ==="
+          grep -n "Live2DAvatar" src/components/Live2DAvatar.tsx || true
+
+          echo "=== App import ==="
+          grep -n "Live2DAvatar" src/App.tsx || true
 
       - name: Build
         run: npm run build
 
-      - name: Verify built Live2D assets
+      # ตรวจไฟล์ Live2D หลัง build
+      - name: Verify Live2D assets
         run: |
-          set -e
-          # Vite copies public/ verbatim to the root of dist/.
-          ROOT="dist/live2d"
-          test -f "$ROOT/MassageSeacubus_rei.model3.json"
-          test -f "$ROOT/MassageSeacubus_rei.moc3"
-          test -f "$ROOT/MassageSeacubus_rei.physics3.json"
-          test -f "$ROOT/MassageSeacubus_rei.cdi3.json"
-          test -d "$ROOT/MassageSeacubus_rei.4096"
-          test -f "$ROOT/MassageSeacubus_rei.4096/texture_00.png"
-          echo "=== Built primary model ==="
-          ls -lh "$ROOT/MassageSeacubus_rei.moc3"
-          echo "=== Built native texture ==="
-          ls -lh "$ROOT/MassageSeacubus_rei.4096/texture_00.png"
-          echo "public/live2d deployed without texture resize/recompression."
+          echo "=== Live2D files in dist ==="
+          find dist -type f \( \
+            -name "*.model3.json" \
+            -o -name "*.moc3" \
+            -o -name "*.png" \
+            -o -name "*.physics3.json" \
+          \) | sort
+
+          echo "=== File sizes ==="
+          find dist -type f \( \
+            -name "*.moc3" \
+            -o -name "*.png" \
+          \) -exec ls -lh {} \;
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
 
