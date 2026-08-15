@@ -33,21 +33,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify original MassageSeacubus_rei files
+      - name: Verify original 海魔完整版 model package
         run: |
           set -e
-          ROOT="public/live2d"
+          ROOT="海魔完整版/MassageSeacubus_full_rei"
           test -f "$ROOT/MassageSeacubus_rei.model3.json"
           test -f "$ROOT/MassageSeacubus_rei.moc3"
           test -f "$ROOT/MassageSeacubus_rei.physics3.json"
           test -f "$ROOT/MassageSeacubus_rei.cdi3.json"
           test -d "$ROOT/MassageSeacubus_rei.4096"
-          echo "Original MassageSeacubus_rei files found."
+          test -f "$ROOT/MassageSeacubus_rei.4096/texture_00.png"
+          echo "Original 海魔完整版 package found."
+          echo "MOC3: $(stat -c%s "$ROOT/MassageSeacubus_rei.moc3") bytes"
+          echo "Texture: $(stat -c%s "$ROOT/MassageSeacubus_rei.4096/texture_00.png") bytes"
 
       - name: Build
         run: npm run build
 
-      - name: Verify deployed Live2D assets
+      - name: Verify deployed 海魔完整版 assets
         run: |
           set -e
           ROOT="dist/live2d/MassageSeacubus_rei"
@@ -55,12 +58,12 @@ jobs:
           test -f "$ROOT/MassageSeacubus_rei.moc3"
           test -f "$ROOT/MassageSeacubus_rei.physics3.json"
           test -f "$ROOT/MassageSeacubus_rei.cdi3.json"
-          test -d "$ROOT/MassageSeacubus_rei.4096"
-          echo "=== Texture files ==="
-          find "$ROOT/MassageSeacubus_rei.4096" -type f -name '*.png' -exec ls -lh {} \;
-          echo "=== Model references ==="
-          grep -E 'MassageSeacubus_rei|texture_00|Physics|Motions|Expressions' "$ROOT/MassageSeacubus_rei.model3.json" || true
-          echo "MassageSeacubus_rei deployed without texture resizing."
+          test -f "$ROOT/MassageSeacubus_rei.4096/texture_00.png"
+          echo "=== Deployed model ==="
+          ls -lh "$ROOT/MassageSeacubus_rei.moc3"
+          echo "=== Deployed native texture ==="
+          ls -lh "$ROOT/MassageSeacubus_rei.4096/texture_00.png"
+          echo "海魔完整版 deployed without texture resize/recompression."
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
