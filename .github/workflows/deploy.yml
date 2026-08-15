@@ -33,24 +33,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify original 海魔完整版 model package
+      - name: Verify primary Live2D package
         run: |
           set -e
-          ROOT="海魔完整版/MassageSeacubus_full_rei"
+          ROOT="public/live2d"
           test -f "$ROOT/MassageSeacubus_rei.model3.json"
           test -f "$ROOT/MassageSeacubus_rei.moc3"
           test -f "$ROOT/MassageSeacubus_rei.physics3.json"
           test -f "$ROOT/MassageSeacubus_rei.cdi3.json"
           test -d "$ROOT/MassageSeacubus_rei.4096"
           test -f "$ROOT/MassageSeacubus_rei.4096/texture_00.png"
-          echo "Original 海魔完整版 package found."
+          echo "Primary public/live2d package found."
           echo "MOC3: $(stat -c%s "$ROOT/MassageSeacubus_rei.moc3") bytes"
           echo "Texture: $(stat -c%s "$ROOT/MassageSeacubus_rei.4096/texture_00.png") bytes"
 
       - name: Build
         run: npm run build
 
-      - name: Verify deployed 海魔完整版 assets
+      - name: Verify deployed Live2D assets
         run: |
           set -e
           ROOT="dist/live2d/MassageSeacubus_rei"
@@ -59,11 +59,11 @@ jobs:
           test -f "$ROOT/MassageSeacubus_rei.physics3.json"
           test -f "$ROOT/MassageSeacubus_rei.cdi3.json"
           test -f "$ROOT/MassageSeacubus_rei.4096/texture_00.png"
-          echo "=== Deployed model ==="
+          echo "=== Deployed primary model ==="
           ls -lh "$ROOT/MassageSeacubus_rei.moc3"
           echo "=== Deployed native texture ==="
           ls -lh "$ROOT/MassageSeacubus_rei.4096/texture_00.png"
-          echo "海魔完整版 deployed without texture resize/recompression."
+          echo "public/live2d deployed without texture resize/recompression."
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
