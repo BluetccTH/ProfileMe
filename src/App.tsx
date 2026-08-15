@@ -632,7 +632,7 @@ export default function App() {
                       {/* Internal Image Frame Mask */}
                       <div className="w-full h-full rounded-full bg-[#0f172a] overflow-hidden flex items-center justify-center">
                         <SafeImage
-                          src="Profile.jpg"
+                          src="Profile.jpeg"
                           alt="Blue.tcc Profile"
                           className="w-full h-full object-cover rounded-full hover:scale-105 transition-transform duration-500"
                           fallbackType="profile"
