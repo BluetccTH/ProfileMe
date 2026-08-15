@@ -33,16 +33,22 @@ function validatePng(filePath) {
 
 function syncRuntimeMoc3Size(size) {
   assertFile(COMPONENT, 'Live2D component');
-  const source = fs.readFileSync(COMPONENT, 'utf8');
+  let source = fs.readFileSync(COMPONENT, 'utf8');
   const pattern = /const EXPECTED_MOC3_SIZE = \d+;/;
   if (!pattern.test(source)) throw new Error('EXPECTED_MOC3_SIZE declaration not found in Live2DAvatar.tsx');
-  const updated = source.replace(pattern, `const EXPECTED_MOC3_SIZE = ${size};`);
-  if (updated !== source) {
-    fs.writeFileSync(COMPONENT, updated, 'utf8');
-    console.log(`[Live2D] Synced runtime MOC3 size to public/live2d: ${size} bytes`);
-  } else {
-    console.log(`[Live2D] Runtime MOC3 size already matches public/live2d: ${size} bytes`);
+  source = source.replace(pattern, `const EXPECTED_MOC3_SIZE = ${size};`);
+
+  // Always use pixi-live2d-display's native model3.json URL loader. This keeps
+  // public/live2d as the sole source of truth and lets the library resolve every
+  // FileReference relative to the model file itself.
+  const oldLoader = /const model = await Live2DModel\.from\(modelSettings, \{ autoInteract: false \}\);/;
+  if (oldLoader.test(source)) {
+    source = source.replace(oldLoader, 'const model = await Live2DModel.from(modelUrl, { autoInteract: false });');
+    console.log('[Live2D] Forced native model URL loader.');
   }
+
+  fs.writeFileSync(COMPONENT, source, 'utf8');
+  console.log(`[Live2D] Runtime MOC3 size synced to public/live2d: ${size} bytes`);
 }
 
 function validateModelJson(filePath) {
@@ -72,7 +78,6 @@ function validateSource() {
   const root = path.resolve(__dirname, '../public/live2d');
   assertDirectory(root, 'Live2D source directory');
 
-  // public/live2d is the only canonical source of truth. Nothing is copied into it.
   const modelPath = path.join(root, `${MODEL}.model3.json`);
   const mocPath = path.join(root, `${MODEL}.moc3`);
   const physicsPath = path.join(root, `${MODEL}.physics3.json`);
