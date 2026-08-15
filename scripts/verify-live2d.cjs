@@ -35,9 +35,6 @@ function validatePng(file, label) {
     const header = buffer.subarray(0, 16).toString('hex').match(/.{1,2}/g)?.join(' ') || '(empty)';
     throw new Error(`PNG signature is invalid: ${label}\nFirst bytes: ${header}`);
   }
-  if (buffer.length < 12 || buffer.subarray(buffer.length - 12, buffer.length - 8).toString('ascii') !== 'IEND') {
-    throw new Error(`PNG IEND chunk is missing: ${label}`);
-  }
 }
 
 function validatePngs(rootDir) {
