@@ -50,116 +50,158 @@ function copyBinary(source, destination) {
   fs.copyFileSync(source, destination);
 }
 
+function validateTextureSet(textureDir) {
+  const textures = fs
+    .readdirSync(textureDir)
+    .filter((name) => name.toLowerCase().endsWith('.png'))
+    .sort();
+
+  if (textures.length === 0) {
+    throw new Error(`No PNG textures found: ${textureDir}`);
+  }
+
+  for (const name of textures) {
+    const filePath = path.join(textureDir, name);
+    assertFile(filePath, `Texture ${name}`);
+    const buffer = fs.readFileSync(filePath);
+    validatePng(buffer, filePath);
+  }
+
+  return textures;
+}
+
 function restoreAssets() {
-  // Use the original tracked Live2D binaries directly.
-  // Do NOT reconstruct .moc3/.png from Base64 text: those text files were
-  // truncated/corrupted and caused invalid Core model data and PNG headers.
+  // The active Live2D model is English version-Full / Number1.
+  // The previous implementation hard-coded the removed MassageSeacubus source,
+  // which made every production build fail before Vite could run.
   const sourceDir = path.resolve(
     __dirname,
-    '../海魔完整版/MassageSeacubus_full_rei'
+    '../English version-Full/Model_Full'
   );
 
-  const publicDir = path.resolve(__dirname, '../public/live2d');
-  const sourceMoc = path.join(sourceDir, 'MassageSeacubus_rei.moc3');
-  const sourcePng = path.join(
-    sourceDir,
-    'MassageSeacubus_rei.4096/texture_00.png'
+  const publicDir = path.resolve(
+    __dirname,
+    '../public/live2d/English_version_Full'
   );
-  const sourceModel = path.join(sourceDir, 'MassageSeacubus_rei.model3.json');
-  const sourcePhysics = path.join(sourceDir, 'MassageSeacubus_rei.physics3.json');
-  const sourceCdi = path.join(sourceDir, 'MassageSeacubus_rei.cdi3.json');
+
+  const sourceMoc = path.join(sourceDir, 'Number1.moc3');
+  const sourceModel = path.join(sourceDir, 'Number1.model3.json');
+  const sourcePhysics = path.join(sourceDir, 'Number1.physics3.json');
+  const sourceCdi = path.join(sourceDir, 'Number1.cdi3.json');
+  const sourceTextureDir = path.join(sourceDir, 'Number1.4096');
+  const sourceExpressionsDir = path.join(sourceDir, 'Expressions');
+  const sourceMotion = path.join(sourceDir, 'Scene1.motion3.json');
+  const sourceVtube = path.join(sourceDir, 'Number1.vtube.json');
 
   for (const [file, label] of [
     [sourceMoc, 'Source MOC3'],
-    [sourcePng, 'Source PNG'],
     [sourceModel, 'Source model3.json'],
     [sourcePhysics, 'Source physics3.json'],
     [sourceCdi, 'Source cdi3.json'],
+    [sourceMotion, 'Source motion3.json'],
+    [sourceVtube, 'Source vtube.json'],
   ]) {
     assertFile(file, label);
   }
 
-  const publicMoc = path.join(publicDir, 'MassageSeacubus_rei.moc3');
-  const publicPng = path.join(
-    publicDir,
-    'MassageSeacubus_rei.4096/texture_00.png'
-  );
-  const publicModel = path.join(publicDir, 'MassageSeacubus_rei.model3.json');
-  const publicPhysics = path.join(publicDir, 'MassageSeacubus_rei.physics3.json');
-  const publicCdi = path.join(publicDir, 'MassageSeacubus_rei.cdi3.json');
+  const textures = validateTextureSet(sourceTextureDir);
 
-  copyBinary(sourceMoc, publicMoc);
-  copyBinary(sourcePng, publicPng);
-  copyBinary(sourceModel, publicModel);
-  copyBinary(sourcePhysics, publicPhysics);
-  copyBinary(sourceCdi, publicCdi);
+  // Expressions are optional at runtime, but we expect the uploaded model pack
+  // to contain the expression files so the UI can expose them.
+  if (!fs.existsSync(sourceExpressionsDir)) {
+    throw new Error(`Source Expressions directory not found: ${sourceExpressionsDir}`);
+  }
+
+  const expressions = fs
+    .readdirSync(sourceExpressionsDir)
+    .filter((name) => name.toLowerCase().endsWith('.exp3.json'))
+    .sort();
+
+  if (expressions.length === 0) {
+    throw new Error(`No .exp3.json expressions found: ${sourceExpressionsDir}`);
+  }
+
+  // Rebuild the public model directory from the uploaded source pack.
+  fs.rmSync(publicDir, { recursive: true, force: true });
+  fs.mkdirSync(publicDir, { recursive: true });
+
+  copyBinary(sourceMoc, path.join(publicDir, 'Number1.moc3'));
+  copyBinary(sourceModel, path.join(publicDir, 'Number1.model3.json'));
+  copyBinary(sourcePhysics, path.join(publicDir, 'Number1.physics3.json'));
+  copyBinary(sourceCdi, path.join(publicDir, 'Number1.cdi3.json'));
+  copyBinary(sourceMotion, path.join(publicDir, 'Scene1.motion3.json'));
+  copyBinary(sourceVtube, path.join(publicDir, 'Number1.vtube.json'));
+
+  const publicTextureDir = path.join(publicDir, 'Number1.4096');
+  fs.mkdirSync(publicTextureDir, { recursive: true });
+  for (const name of textures) {
+    copyBinary(
+      path.join(sourceTextureDir, name),
+      path.join(publicTextureDir, name)
+    );
+  }
+
+  const publicExpressionsDir = path.join(publicDir, 'Expressions');
+  fs.mkdirSync(publicExpressionsDir, { recursive: true });
+  for (const name of expressions) {
+    copyBinary(
+      path.join(sourceExpressionsDir, name),
+      path.join(publicExpressionsDir, name)
+    );
+  }
+
+  const publicMoc = path.join(publicDir, 'Number1.moc3');
+  const publicModel = path.join(publicDir, 'Number1.model3.json');
+  const publicPhysics = path.join(publicDir, 'Number1.physics3.json');
+  const publicCdi = path.join(publicDir, 'Number1.cdi3.json');
 
   const mocBin = fs.readFileSync(publicMoc);
-  const pngBin = fs.readFileSync(publicPng);
-
   validateMoc3(mocBin, publicMoc);
-  validatePng(pngBin, publicPng);
 
-  if (mocBin.equals(pngBin)) {
-    throw new Error('CRITICAL: MOC3 and PNG are identical binaries.');
+  for (const file of [publicModel, publicPhysics, publicCdi]) {
+    assertFile(file, `Public ${path.basename(file)}`);
   }
+
+  validateTextureSet(publicTextureDir);
 
   const sourceMocBin = fs.readFileSync(sourceMoc);
-  const sourcePngBin = fs.readFileSync(sourcePng);
-
-  if (!mocBin.equals(sourceMocBin) || !pngBin.equals(sourcePngBin)) {
-    throw new Error('CRITICAL: public Live2D binaries differ from the original tracked binaries.');
+  if (!mocBin.equals(sourceMocBin)) {
+    throw new Error('CRITICAL: public MOC3 differs from the uploaded English version-Full model.');
   }
 
-  console.log('[Live2D Auto-Restore] Original tracked Live2D binaries copied.');
+  console.log('[Live2D Auto-Restore] English version-Full model prepared.');
   console.log(`  MOC3 : ${mocBin.length} bytes`);
-  console.log(`  PNG  : ${pngBin.length} bytes`);
-  console.log(`  MOC3 header: ${mocBin.subarray(0, 4).toString('ascii')}`);
-  console.log(`  PNG header : ${pngBin.subarray(0, 8).toString('hex')}`);
+  console.log(`  Textures: ${textures.length}`);
+  console.log(`  Expressions: ${expressions.length}`);
+  console.log(`  Motion: Scene1.motion3.json`);
 
   const distDir = path.resolve(__dirname, '../dist');
-
   if (fs.existsSync(distDir)) {
-    const distMoc = path.join(
-      distDir,
-      'live2d/MassageSeacubus_rei.moc3'
-    );
-    const distPng = path.join(
-      distDir,
-      'live2d/MassageSeacubus_rei.4096/texture_00.png'
-    );
-    const distModel = path.join(
-      distDir,
-      'live2d/MassageSeacubus_rei.model3.json'
-    );
-    const distPhysics = path.join(
-      distDir,
-      'live2d/MassageSeacubus_rei.physics3.json'
-    );
-    const distCdi = path.join(
-      distDir,
-      'live2d/MassageSeacubus_rei.cdi3.json'
-    );
+    const distModelDir = path.join(distDir, 'live2d/English_version_Full');
+    const distMoc = path.join(distModelDir, 'Number1.moc3');
+    const distModel = path.join(distModelDir, 'Number1.model3.json');
+    const distPhysics = path.join(distModelDir, 'Number1.physics3.json');
+    const distCdi = path.join(distModelDir, 'Number1.cdi3.json');
 
-    copyBinary(publicMoc, distMoc);
-    copyBinary(publicPng, distPng);
-    copyBinary(publicModel, distModel);
-    copyBinary(publicPhysics, distPhysics);
-    copyBinary(publicCdi, distCdi);
-
-    const deployedMoc = fs.readFileSync(distMoc);
-    const deployedPng = fs.readFileSync(distPng);
-
-    validateMoc3(deployedMoc, distMoc);
-    validatePng(deployedPng, distPng);
-
-    if (!deployedMoc.equals(mocBin) || !deployedPng.equals(pngBin)) {
-      throw new Error('CRITICAL: dist Live2D binaries differ from public source binaries.');
+    for (const [file, label] of [
+      [distMoc, 'Dist MOC3'],
+      [distModel, 'Dist model3.json'],
+      [distPhysics, 'Dist physics3.json'],
+      [distCdi, 'Dist cdi3.json'],
+    ]) {
+      assertFile(file, label);
     }
 
-    console.log('[Live2D Auto-Restore] Dist binaries verified.');
+    const deployedMoc = fs.readFileSync(distMoc);
+    validateMoc3(deployedMoc, distMoc);
+    validateTextureSet(path.join(distModelDir, 'Number1.4096'));
+
+    if (!deployedMoc.equals(mocBin)) {
+      throw new Error('CRITICAL: dist MOC3 differs from public English version-Full MOC3.');
+    }
+
+    console.log('[Live2D Auto-Restore] Dist English model verified.');
     console.log(`  dist MOC3 : ${deployedMoc.length} bytes`);
-    console.log(`  dist PNG  : ${deployedPng.length} bytes`);
   }
 
   console.log('[Live2D Auto-Restore] SUCCESS');
