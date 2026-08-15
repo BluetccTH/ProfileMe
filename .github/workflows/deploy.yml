@@ -74,9 +74,9 @@ jobs:
       - name: Build
         run: npm run build
 
-      # Optimize the deployed Live2D texture without requiring ImageMagick.
-      # Uses Python Pillow, installed only in the runner environment.
-      - name: Optimize Live2D texture
+      # Keep the original Live2D texture at its native maximum: 4096x4096.
+      # Do not downscale the model texture during deployment.
+      - name: Verify Live2D texture (max 4096px)
         run: |
           set -e
           TEXTURE="dist/live2d/MassageSeacubus_rei.4096/texture_00.png"
@@ -90,41 +90,18 @@ jobs:
 
           python - "$TEXTURE" <<'PY'
           import sys
-          from pathlib import Path
-          from PIL import Image
-
-          path = Path(sys.argv[1])
-          max_size = 2048
-
-          with Image.open(path) as image:
-              print(f"Original texture: {image.size[0]}x{image.size[1]}")
-              print(f"Original mode: {image.mode}")
-
-              if max(image.size) > max_size:
-                  image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
-                  image.save(path, format="PNG", optimize=True, compress_level=9)
-                  print(f"Optimized texture: {image.size[0]}x{image.size[1]}")
-              else:
-                  print("Texture is already <= 2048px; skipping resize.")
-
-          print(f"Final size: {path.stat().st_size} bytes")
-          PY
-
-      - name: Verify Live2D assets
-        run: |
-          set -e
-          TEXTURE="dist/live2d/MassageSeacubus_rei.4096/texture_00.png"
-          python - "$TEXTURE" <<'PY'
-          import sys
           from PIL import Image
           from pathlib import Path
 
           path = Path(sys.argv[1])
           with Image.open(path) as image:
               width, height = image.size
-              print(f"Final texture dimensions: {width}x{height}")
-              if width > 2048 or height > 2048:
-                  raise SystemExit("ERROR: Live2D texture exceeds 2048px")
+              print(f"Live2D texture dimensions: {width}x{height}")
+              print(f"Live2D texture size: {path.stat().st_size} bytes")
+              if width > 4096 or height > 4096:
+                  raise SystemExit("ERROR: Live2D texture exceeds 4096px")
+              if width != 4096 or height != 4096:
+                  print("WARNING: texture is below native 4096x4096 resolution")
           PY
 
           echo "=== Live2D files in dist ==="
