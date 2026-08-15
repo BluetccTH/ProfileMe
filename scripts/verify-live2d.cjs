@@ -25,7 +25,8 @@ for (const file of files) {
 
 const mocPath = files[0];
 const mocHeader = fs.readFileSync(mocPath).subarray(0, 4).toString('ascii');
-if (mocHeader !== 'moc3') {
+// Cubism .moc3 files use the ASCII magic header "MOC3" (uppercase).
+if (mocHeader !== 'MOC3') {
   console.error(`[Live2D Verify] Invalid moc3 header: ${JSON.stringify(mocHeader)}`);
   process.exit(1);
 }
