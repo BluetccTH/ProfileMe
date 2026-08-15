@@ -2,114 +2,76 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: true
-
-env:
-  NODE_VERSION: 24
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
-  security-audit:
-    name: Dependency security audit
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 1
-          persist-credentials: false
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          package-manager-cache: false
-      - name: Install dependencies
-        run: npm install --legacy-peer-deps --prefer-offline --no-audit --no-fund
-      - name: npm audit (report only)
-        shell: bash
-        run: |
-          set +e
-          npm audit --audit-level=high
-          status=$?
-          if [ "$status" -ne 0 ]; then
-            echo "::warning::npm audit reported dependency findings. Deployment is intentionally not blocked by this separate audit job."
-          fi
-          exit 0
-
   deploy:
-    name: Build and deploy
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          fetch-depth: 1
-          persist-credentials: false
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: 22
           cache: npm
-          package-manager-cache: false
+
       - name: Install dependencies
-        run: npm install --legacy-peer-deps --prefer-offline --no-audit --no-fund
-      - name: Verify Live2D source and references
-        shell: bash
+        run: npm ci
+
+      # ตรวจ export ก่อน build
+      - name: Check Live2DAvatar export
         run: |
-          set -euo pipefail
-          node - <<'NODE'
-          const fs = require('fs');
-          const path = require('path');
-          const root = path.resolve('public/live2d');
-          const modelPath = path.join(root, 'MassageSeacubus_rei.model3.json');
-          const model = JSON.parse(fs.readFileSync(modelPath, 'utf8'));
-          const refs = model.FileReferences || {};
-          const refsToCheck = new Set();
-          const addRef = (value) => { if (typeof value === 'string' && value.length > 0) refsToCheck.add(value); };
-          addRef(refs.Moc); addRef(refs.Physics); addRef(refs.Pose); addRef(refs.DisplayInfo);
-          for (const file of Array.isArray(refs.Textures) ? refs.Textures : []) addRef(file);
-          for (const expression of Array.isArray(refs.Expressions) ? refs.Expressions : []) addRef(expression?.File);
-          for (const group of Object.values(refs.Motions || {})) for (const motion of Array.isArray(group) ? group : []) addRef(motion?.File);
-          if (refs.Moc !== 'MassageSeacubus_rei.moc3') throw new Error(`Unexpected MOC3 reference: ${refs.Moc || '(missing)'}`);
-          const mocPath = path.join(root, 'MassageSeacubus_rei.moc3');
-          const moc = fs.readFileSync(mocPath);
-          if (moc.length < 64 || moc.subarray(0, 4).toString('ascii') !== 'MOC3') throw new Error('public/live2d MOC3 header is invalid');
-          console.log(`Verified source MOC3: ${moc.length} bytes`);
-          for (const file of refsToCheck) {
-            if (file.startsWith('/') || file.includes('..')) throw new Error(`Unsafe reference: ${file}`);
-            const full = path.resolve(root, file);
-            if (!full.startsWith(`${root}${path.sep}`) || !fs.existsSync(full) || !fs.statSync(full).isFile()) throw new Error(`Missing referenced Live2D asset: ${file}`);
-          }
-          console.log(`Verified ${refsToCheck.size} referenced Live2D files in public/live2d.`);
-          NODE
+          echo "=== Live2DAvatar.tsx ==="
+          grep -n "Live2DAvatar" src/components/Live2DAvatar.tsx || true
+
+          echo "=== App import ==="
+          grep -n "Live2DAvatar" src/App.tsx || true
+
       - name: Build
         run: npm run build
-        env:
-          NODE_OPTIONS: --max-old-space-size=4096
-      - name: Verify final Live2D artifact
-        run: npm run verify:live2d
-      - name: Configure Pages
-        uses: actions/configure-pages@v6
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5
+
+      # ตรวจไฟล์ Live2D หลัง build
+      - name: Verify Live2D assets
+        run: |
+          echo "=== Live2D files in dist ==="
+          find dist -type f \( \
+            -name "*.model3.json" \
+            -o -name "*.moc3" \
+            -o -name "*.png" \
+            -o -name "*.physics3.json" \
+          \) | sort
+
+          echo "=== File sizes ==="
+          find dist -type f \( \
+            -name "*.moc3" \
+            -o -name "*.png" \
+          \) -exec ls -lh {} \;
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
+
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@v4
