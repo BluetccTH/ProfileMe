@@ -6,6 +6,7 @@ const root = path.resolve(__dirname, '../public/live2d');
 const dist = path.resolve(__dirname, '../dist/live2d');
 const MODEL = 'MassageSeacubus_rei';
 const EXPECTED_MOC3_SIZE = 2628790;
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 function files(rootDir) {
   const out = [];
@@ -28,6 +29,23 @@ function assertFile(file, label) {
   if (!fs.existsSync(file) || !fs.statSync(file).isFile()) throw new Error(`${label} missing: ${file}`);
 }
 
+function validatePng(file, label) {
+  const buffer = fs.readFileSync(file);
+  if (buffer.length < PNG_SIGNATURE.length || !buffer.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)) {
+    const header = buffer.subarray(0, 16).toString('hex').match(/.{1,2}/g)?.join(' ') || '(empty)';
+    throw new Error(`PNG signature is invalid: ${label}\nFirst bytes: ${header}`);
+  }
+  if (buffer.length < 12 || buffer.subarray(buffer.length - 12, buffer.length - 8).toString('ascii') !== 'IEND') {
+    throw new Error(`PNG IEND chunk is missing: ${label}`);
+  }
+}
+
+function validatePngs(rootDir) {
+  for (const rel of files(rootDir).filter(file => /\.png$/i.test(file))) {
+    validatePng(path.join(rootDir, rel), rel);
+  }
+}
+
 function assertSameTree() {
   assertFile(path.join(root, `${MODEL}.model3.json`), 'Model JSON');
   assertFile(path.join(root, `${MODEL}.moc3`), 'MOC3');
@@ -37,6 +55,8 @@ function assertSameTree() {
     throw new Error(`MOC3 size mismatch: expected ${EXPECTED_MOC3_SIZE}, got ${moc.length}`);
   }
   if (moc.subarray(0, 4).toString('ascii') !== 'MOC3') throw new Error('MOC3 magic header is invalid');
+
+  validatePngs(root);
 
   if (!fs.existsSync(dist)) throw new Error('dist/live2d does not exist');
   const sourceFiles = files(root);
@@ -53,6 +73,8 @@ function assertSameTree() {
     const b = sha256(built);
     if (a !== b) throw new Error(`Live2D SHA-256 mismatch: ${rel}\nsource=${a}\ndist=${b}`);
   }
+
+  validatePngs(dist);
 
   console.log(`[Live2D] Build integrity OK: ${sourceFiles.length} file(s), byte-for-byte identical.`);
   console.log(`[Live2D] ${MODEL}.moc3: ${EXPECTED_MOC3_SIZE} bytes`);
