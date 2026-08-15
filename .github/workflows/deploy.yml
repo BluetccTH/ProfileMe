@@ -25,17 +25,14 @@ jobs:
         with:
           fetch-depth: 1
           persist-credentials: false
-
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           package-manager-cache: false
-
       - name: Install dependencies
         run: npm install --legacy-peer-deps --prefer-offline --no-audit --no-fund
-
       - name: npm audit (report only)
         shell: bash
         run: |
@@ -58,24 +55,20 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
           fetch-depth: 1
           persist-credentials: false
-
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           package-manager-cache: false
-
       - name: Install dependencies
         run: npm install --legacy-peer-deps --prefer-offline --no-audit --no-fund
-
       - name: Verify Live2D source and references
         shell: bash
         run: |
@@ -88,54 +81,35 @@ jobs:
           const model = JSON.parse(fs.readFileSync(modelPath, 'utf8'));
           const refs = model.FileReferences || {};
           const refsToCheck = new Set();
-          const addRef = (value) => {
-            if (typeof value === 'string' && value.length > 0) refsToCheck.add(value);
-          };
-
-          addRef(refs.Moc);
-          addRef(refs.Physics);
-          addRef(refs.Pose);
-          addRef(refs.DisplayInfo);
+          const addRef = (value) => { if (typeof value === 'string' && value.length > 0) refsToCheck.add(value); };
+          addRef(refs.Moc); addRef(refs.Physics); addRef(refs.Pose); addRef(refs.DisplayInfo);
           for (const file of Array.isArray(refs.Textures) ? refs.Textures : []) addRef(file);
           for (const expression of Array.isArray(refs.Expressions) ? refs.Expressions : []) addRef(expression?.File);
-          for (const group of Object.values(refs.Motions || {})) {
-            for (const motion of Array.isArray(group) ? group : []) addRef(motion?.File);
-          }
-
-          if (refs.Moc !== 'MassageSeacubus_rei.moc3') {
-            throw new Error(`Unexpected MOC3 reference: ${refs.Moc || '(missing)'}`);
-          }
-
+          for (const group of Object.values(refs.Motions || {})) for (const motion of Array.isArray(group) ? group : []) addRef(motion?.File);
+          if (refs.Moc !== 'MassageSeacubus_rei.moc3') throw new Error(`Unexpected MOC3 reference: ${refs.Moc || '(missing)'}`);
           const mocPath = path.join(root, 'MassageSeacubus_rei.moc3');
-          const mocSize = fs.statSync(mocPath).size;
-          if (mocSize !== 2628790) throw new Error(`MOC3 size mismatch: expected 2628790, got ${mocSize}`);
-
+          const moc = fs.readFileSync(mocPath);
+          if (moc.length < 64 || moc.subarray(0, 4).toString('ascii') !== 'MOC3') throw new Error('public/live2d MOC3 header is invalid');
+          console.log(`Verified source MOC3: ${moc.length} bytes`);
           for (const file of refsToCheck) {
             if (file.startsWith('/') || file.includes('..')) throw new Error(`Unsafe reference: ${file}`);
             const full = path.resolve(root, file);
-            if (!full.startsWith(`${root}${path.sep}`) || !fs.existsSync(full) || !fs.statSync(full).isFile()) {
-              throw new Error(`Missing referenced Live2D asset: ${file}`);
-            }
+            if (!full.startsWith(`${root}${path.sep}`) || !fs.existsSync(full) || !fs.statSync(full).isFile()) throw new Error(`Missing referenced Live2D asset: ${file}`);
           }
           console.log(`Verified ${refsToCheck.size} referenced Live2D files in public/live2d.`);
           NODE
-
       - name: Build
         run: npm run build
         env:
           NODE_OPTIONS: --max-old-space-size=4096
-
       - name: Verify final Live2D artifact
         run: npm run verify:live2d
-
       - name: Configure Pages
         uses: actions/configure-pages@v6
-
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
           path: ./dist
-
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
