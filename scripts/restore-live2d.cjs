@@ -12,6 +12,22 @@ function assertFile(filePath, label) {
   }
 }
 
+// A previous text-based upload accidentally introduced the UTF-8 encoding of
+// U+FFFD (EF BF BD) immediately before the real binary header. Remove that
+// prefix if present, but do not otherwise modify the binary payload.
+function stripUtf8ReplacementPrefix(buffer) {
+  const replacement = Buffer.from([0xef, 0xbf, 0xbd]);
+
+  if (buffer.subarray(0, 3).equals(replacement)) {
+    console.warn(
+      '[Live2D Auto-Restore] Removing accidental UTF-8 replacement-character prefix.'
+    );
+    return buffer.subarray(3);
+  }
+
+  return buffer;
+}
+
 function validateMoc3(buffer, filePath) {
   if (buffer.length < 64) {
     throw new Error(`.moc3 file is too small: ${buffer.length} bytes`);
@@ -21,7 +37,8 @@ function validateMoc3(buffer, filePath) {
   if (magic !== 'MOC3') {
     throw new Error(
       `.moc3 validation failed for ${path.basename(filePath)}: ` +
-      `expected MOC3, got ${JSON.stringify(magic)}`
+      `expected MOC3, got ${JSON.stringify(magic)} ` +
+      `(${buffer.subarray(0, 16).toString('hex')})`
     );
   }
 }
@@ -50,11 +67,6 @@ function writeBinary(filePath, buffer) {
 }
 
 function restoreAssets() {
-  // IMPORTANT:
-  // Do not reconstruct the binaries from huge Base64 text files anymore.
-  // The exact binary assets are already tracked in public/live2d/.
-  // Re-encoding them as text caused truncation/corruption and even produced
-  // a texture with the same size as the MOC3 file.
   const publicMoc = path.resolve(
     __dirname,
     '../public/live2d/MassageSeacubus_rei.moc3'
@@ -68,8 +80,13 @@ function restoreAssets() {
   assertFile(publicMoc, 'MOC3 source');
   assertFile(publicTex, 'PNG source');
 
-  const mocBin = fs.readFileSync(publicMoc);
-  const texBin = fs.readFileSync(publicTex);
+  let mocBin = fs.readFileSync(publicMoc);
+  let texBin = fs.readFileSync(publicTex);
+
+  // Repair only the known UTF-8 replacement-character prefix. The rest of
+  // each binary remains byte-for-byte unchanged.
+  mocBin = stripUtf8ReplacementPrefix(mocBin);
+  texBin = stripUtf8ReplacementPrefix(texBin);
 
   validateMoc3(mocBin, publicMoc);
   validatePng(texBin, publicTex);
@@ -84,9 +101,6 @@ function restoreAssets() {
 
   const distDir = path.resolve(__dirname, '../dist');
 
-  // This runs both before and after Vite build.
-  // Before build: dist normally does not exist, so nothing is copied.
-  // After build: overwrite/verify the exact binaries in dist.
   if (fs.existsSync(distDir)) {
     const distMoc = path.join(
       distDir,
@@ -101,7 +115,6 @@ function restoreAssets() {
     writeBinary(distMoc, mocBin);
     writeBinary(distTex, texBin);
 
-    // Read back what will actually be deployed.
     const deployedMoc = fs.readFileSync(distMoc);
     const deployedTex = fs.readFileSync(distTex);
 
@@ -109,7 +122,9 @@ function restoreAssets() {
     validatePng(deployedTex, distTex);
 
     if (!deployedMoc.equals(mocBin) || !deployedTex.equals(texBin)) {
-      throw new Error('CRITICAL: dist Live2D binaries differ from public source binaries.');
+      throw new Error(
+        'CRITICAL: dist Live2D binaries differ from public source binaries.'
+      );
     }
 
     console.log('[Live2D Auto-Restore] Dist binaries verified.');
