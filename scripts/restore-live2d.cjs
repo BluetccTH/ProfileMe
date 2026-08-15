@@ -18,36 +18,17 @@ function validateMoc3(buffer, filePath) {
   }
 }
 
-function isPng(buffer) {
-  const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-  return buffer.length >= 8 && buffer.subarray(0, 8).equals(signature);
-}
-
-function validatePng(buffer, filePath) {
-  // Only validate the standard 8-byte PNG signature.
-  // Never decode, resize, recompress, or rewrite the texture.
-  if (!isPng(buffer)) {
-    throw new Error(`.png validation failed for ${path.basename(filePath)}`);
-  }
-}
-
 function copyBinary(source, destination) {
   fs.mkdirSync(path.dirname(destination), { recursive: true });
   fs.copyFileSync(source, destination);
 }
 
-function validateTextureSet(textureDir, allowNonPng = false) {
+function listTextures(textureDir) {
   assertDirectory(textureDir, 'Texture directory');
-  const textures = fs.readdirSync(textureDir).filter(n => /\.(png|jpg|jpeg|webp)$/i.test(n)).sort();
+  const textures = fs.readdirSync(textureDir)
+    .filter(n => /\.(png|jpg|jpeg|webp)$/i.test(n))
+    .sort();
   if (!textures.length) throw new Error(`No texture files found: ${textureDir}`);
-
-  for (const name of textures) {
-    const file = path.join(textureDir, name);
-    assertFile(file, `Texture ${name}`);
-    const buffer = fs.readFileSync(file);
-    if (/\.png$/i.test(name)) validatePng(buffer, file);
-    else if (!allowNonPng) throw new Error(`Unsupported texture format: ${name}`);
-  }
   return textures;
 }
 
@@ -70,8 +51,9 @@ function copyIfMissing(primaryRoot, fallbackRoot, relativePath) {
 }
 
 function restoreAssets() {
-  // Primary: public/live2d. Fallback: 海魔完整版/MassageSeacubus_full_rei.
-  // Existing live2d files are never overwritten and textures are never modified.
+  // public/live2d is the source of truth.
+  // 海魔完整版 is used only when an asset is genuinely missing.
+  // Binary textures are intentionally NOT decoded or rewritten here.
   const primaryRoot = path.resolve(__dirname, '../public/live2d');
   const fallbackRoot = path.resolve(__dirname, '../海魔完整版/MassageSeacubus_full_rei');
   const modelName = 'MassageSeacubus_rei';
@@ -79,28 +61,32 @@ function restoreAssets() {
   assertDirectory(primaryRoot, 'Primary Live2D directory');
   assertDirectory(fallbackRoot, 'Live2D fallback directory');
 
-  const requiredFiles = [
+  for (const relativePath of [
     `${modelName}.model3.json`,
     `${modelName}.moc3`,
     `${modelName}.physics3.json`,
     `${modelName}.cdi3.json`,
-  ];
-  for (const relativePath of requiredFiles) copyIfMissing(primaryRoot, fallbackRoot, relativePath);
+  ]) {
+    copyIfMissing(primaryRoot, fallbackRoot, relativePath);
+  }
 
-  // Prefer the texture directory already referenced by the primary model.
   const primaryTextureDir = path.join(primaryRoot, `${modelName}.4096`);
   const fallbackTextureDir = path.join(fallbackRoot, `${modelName}.4096`);
-  if (!fs.existsSync(primaryTextureDir) || !fs.statSync(primaryTextureDir).isDirectory() ||
-      fs.readdirSync(primaryTextureDir).filter(n => /\.(png|jpg|jpeg|webp)$/i.test(n)).length === 0) {
+
+  let textures;
+  if (fs.existsSync(primaryTextureDir) && fs.statSync(primaryTextureDir).isDirectory()) {
+    textures = listTextures(primaryTextureDir);
+  } else {
     assertDirectory(fallbackTextureDir, 'Fallback texture directory');
     fs.mkdirSync(primaryTextureDir, { recursive: true });
-    for (const name of fs.readdirSync(fallbackTextureDir).filter(n => /\.(png|jpg|jpeg|webp)$/i.test(n))) {
+    for (const name of listTextures(fallbackTextureDir)) {
       const destination = path.join(primaryTextureDir, name);
       if (!fs.existsSync(destination)) copyBinary(path.join(fallbackTextureDir, name), destination);
     }
+    textures = listTextures(primaryTextureDir);
   }
 
-  // Expressions and motions referenced by the primary model are fallback-only.
+  // Fill only files referenced by the primary model and only when missing.
   const modelFile = path.join(primaryRoot, `${modelName}.model3.json`);
   const model = JSON.parse(fs.readFileSync(modelFile, 'utf8'));
   const referenced = new Set();
@@ -116,15 +102,17 @@ function restoreAssets() {
   for (const relativePath of referenced) copyIfMissing(primaryRoot, fallbackRoot, relativePath);
 
   const mocPath = path.join(primaryRoot, `${modelName}.moc3`);
+  assertFile(mocPath, 'MOC3');
   validateMoc3(fs.readFileSync(mocPath), mocPath);
-  const textures = validateTextureSet(primaryTextureDir, true);
+
+  for (const name of textures) assertFile(path.join(primaryTextureDir, name), `Texture ${name}`);
 
   console.log('[Live2D Auto-Restore] Primary: public/live2d');
   console.log('[Live2D Auto-Restore] Fallback: 海魔完整版/MassageSeacubus_full_rei');
   console.log(`  MOC3: ${fs.statSync(mocPath).size} bytes`);
   console.log(`  Textures: ${textures.length}`);
   console.log('  Existing live2d assets preserved; fallback used only when missing.');
-  console.log('  Native texture files preserved; no resize/recompression.');
+  console.log('  Texture binaries copied byte-for-byte; no resize/recompression/format validation.');
 }
 
 try { restoreAssets(); }
