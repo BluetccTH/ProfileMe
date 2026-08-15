@@ -47,7 +47,34 @@ jobs:
       - name: Build
         run: npm run build
 
-      # ตรวจไฟล์ Live2D หลัง build
+      # Optimize the deployed Live2D texture.
+      # The source asset stays untouched, but the GitHub Pages copy is capped at 2048x2048.
+      # This keeps the existing model3.json path intact while substantially reducing
+      # texture decode/upload cost compared with the original 4096x4096 texture.
+      - name: Optimize Live2D texture
+        run: |
+          set -e
+          TEXTURE="dist/live2d/MassageSeacubus_rei.4096/texture_00.png"
+
+          if [ -f "$TEXTURE" ]; then
+            echo "=== Original texture ==="
+            identify "$TEXTURE"
+            ls -lh "$TEXTURE"
+
+            if identify "$TEXTURE" | grep -q '4096x4096'; then
+              convert "$TEXTURE" -resize '2048x2048>' -strip -define png:compression-level=9 "$TEXTURE"
+              echo "=== Optimized texture ==="
+              identify "$TEXTURE"
+              ls -lh "$TEXTURE"
+            else
+              echo "Texture is already <= 2048px; skipping resize."
+            fi
+          else
+            echo "Live2D texture not found: $TEXTURE"
+            exit 1
+          fi
+
+      # ตรวจไฟล์ Live2D หลัง build/optimization
       - name: Verify Live2D assets
         run: |
           echo "=== Live2D files in dist ==="
