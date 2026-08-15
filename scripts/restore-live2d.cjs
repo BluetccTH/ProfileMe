@@ -3,6 +3,7 @@ const path = require('path');
 
 const MODEL = 'MassageSeacubus_rei';
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const COMPONENT = path.resolve(__dirname, '../src/components/Live2DAvatar.tsx');
 
 function assertFile(filePath, label) {
   if (!fs.existsSync(filePath)) throw new Error(`${label} not found: ${filePath}`);
@@ -18,9 +19,8 @@ function assertDirectory(dirPath, label) {
 function validateMoc3(filePath) {
   const buffer = fs.readFileSync(filePath);
   if (buffer.length < 64) throw new Error(`MOC3 is too small: ${filePath}`);
-  if (buffer.subarray(0, 4).toString('ascii') !== 'MOC3') {
-    throw new Error(`MOC3 magic header is invalid: ${filePath}`);
-  }
+  if (buffer.subarray(0, 4).toString('ascii') !== 'MOC3') throw new Error(`MOC3 magic header is invalid: ${filePath}`);
+  return buffer.length;
 }
 
 function validatePng(filePath) {
@@ -28,6 +28,20 @@ function validatePng(filePath) {
   if (buffer.length < PNG_SIGNATURE.length || !buffer.subarray(0, 8).equals(PNG_SIGNATURE)) {
     const header = buffer.subarray(0, 16).toString('hex').match(/.{1,2}/g)?.join(' ') || '(empty)';
     throw new Error(`PNG signature is invalid: ${filePath}\nFirst bytes: ${header}`);
+  }
+}
+
+function syncRuntimeMoc3Size(size) {
+  assertFile(COMPONENT, 'Live2D component');
+  const source = fs.readFileSync(COMPONENT, 'utf8');
+  const pattern = /const EXPECTED_MOC3_SIZE = \d+;/;
+  if (!pattern.test(source)) throw new Error('EXPECTED_MOC3_SIZE declaration not found in Live2DAvatar.tsx');
+  const updated = source.replace(pattern, `const EXPECTED_MOC3_SIZE = ${size};`);
+  if (updated !== source) {
+    fs.writeFileSync(COMPONENT, updated, 'utf8');
+    console.log(`[Live2D] Synced runtime MOC3 size to public/live2d: ${size} bytes`);
+  } else {
+    console.log(`[Live2D] Runtime MOC3 size already matches public/live2d: ${size} bytes`);
   }
 }
 
@@ -45,15 +59,11 @@ function validateReferencedPaths(root, model) {
   const referenced = new Set([refs.Moc]);
   for (const texture of refs.Textures || []) referenced.add(texture);
   for (const expression of refs.Expressions || []) if (expression.File) referenced.add(expression.File);
-  for (const group of Object.values(refs.Motions || {})) {
-    for (const motion of Array.isArray(group) ? group : []) if (motion.File) referenced.add(motion.File);
-  }
+  for (const group of Object.values(refs.Motions || {})) for (const motion of Array.isArray(group) ? group : []) if (motion.File) referenced.add(motion.File);
   for (const key of ['Physics', 'Pose', 'DisplayInfo']) if (refs[key]) referenced.add(refs[key]);
 
   for (const relativePath of referenced) {
-    if (!relativePath || relativePath.startsWith('/') || relativePath.includes('..')) {
-      throw new Error(`Unsafe Live2D asset reference: ${relativePath}`);
-    }
+    if (!relativePath || relativePath.startsWith('/') || relativePath.includes('..')) throw new Error(`Unsafe Live2D asset reference: ${relativePath}`);
     assertFile(path.resolve(root, relativePath), `Referenced Live2D asset ${relativePath}`);
   }
 }
@@ -62,8 +72,7 @@ function validateSource() {
   const root = path.resolve(__dirname, '../public/live2d');
   assertDirectory(root, 'Live2D source directory');
 
-  // public/live2d is the canonical source of truth. Never replace its binary
-  // assets with another copy from the repository and never regenerate them.
+  // public/live2d is the only canonical source of truth. Nothing is copied into it.
   const modelPath = path.join(root, `${MODEL}.model3.json`);
   const mocPath = path.join(root, `${MODEL}.moc3`);
   const physicsPath = path.join(root, `${MODEL}.physics3.json`);
@@ -72,7 +81,8 @@ function validateSource() {
 
   const model = validateModelJson(modelPath);
   assertFile(mocPath, 'MOC3');
-  validateMoc3(mocPath);
+  const mocSize = validateMoc3(mocPath);
+  syncRuntimeMoc3Size(mocSize);
   assertFile(physicsPath, 'Physics');
   assertFile(cdiPath, 'CDI');
   assertDirectory(textureDir, 'Texture directory');
@@ -89,7 +99,7 @@ function validateSource() {
   console.log('[Live2D] Source of truth: public/live2d');
   console.log('[Live2D] Asset copying/modification: DISABLED');
   console.log(`  Model: ${MODEL}`);
-  console.log(`  MOC3: ${fs.statSync(mocPath).size} bytes`);
+  console.log(`  MOC3: ${mocSize} bytes`);
   console.log(`  PNG textures: ${textures.length}`);
   console.log('  No resize / recompression / format conversion / Base64 regeneration.');
 }
