@@ -1,0 +1,823 @@
+{
+	"Version": 3,
+	"Parameters": [
+		{
+			"Id": "ParamAngleX",
+			"GroupId": "ParamGroup",
+			"Name": "Angle X"
+		},
+		{
+			"Id": "ParamAngleY",
+			"GroupId": "ParamGroup",
+			"Name": "Angle Y"
+		},
+		{
+			"Id": "ParamAngleZ",
+			"GroupId": "ParamGroup",
+			"Name": "Angle Z"
+		},
+		{
+			"Id": "ParamBodyAngleZ",
+			"GroupId": "ParamGroup",
+			"Name": "Body Z"
+		},
+		{
+			"Id": "ParamBreath",
+			"GroupId": "ParamGroup",
+			"Name": "Breath"
+		},
+		{
+			"Id": "ParamBreath2",
+			"GroupId": "ParamGroup",
+			"Name": "Breath"
+		},
+		{
+			"Id": "ParamHorn1",
+			"GroupId": "ParamGroup",
+			"Name": "Horn 1"
+		},
+		{
+			"Id": "ParamHorn2",
+			"GroupId": "ParamGroup",
+			"Name": "Horn 2"
+		},
+		{
+			"Id": "ParamHorn3",
+			"GroupId": "ParamGroup",
+			"Name": "Horn 3"
+		},
+		{
+			"Id": "ParamHorn4",
+			"GroupId": "ParamGroup",
+			"Name": "Horn 4"
+		},
+		{
+			"Id": "ParamEyeLOpen",
+			"GroupId": "ParamGroup2",
+			"Name": "EyeL Open"
+		},
+		{
+			"Id": "ParamEyeLSmile",
+			"GroupId": "ParamGroup2",
+			"Name": "EyeL Smile"
+		},
+		{
+			"Id": "EyeL_Squint",
+			"GroupId": "ParamGroup2",
+			"Name": "EyeL Squint"
+		},
+		{
+			"Id": "ParamEyeROpen",
+			"GroupId": "ParamGroup2",
+			"Name": "EyeR Open"
+		},
+		{
+			"Id": "ParamEyeRSmile",
+			"GroupId": "ParamGroup2",
+			"Name": "EyeR Smile"
+		},
+		{
+			"Id": "EyeR_Squint",
+			"GroupId": "ParamGroup2",
+			"Name": "EyeR Squint"
+		},
+		{
+			"Id": "ParamEyeBallX",
+			"GroupId": "ParamGroup2",
+			"Name": "Eyeball X"
+		},
+		{
+			"Id": "ParamEyeBallY",
+			"GroupId": "ParamGroup2",
+			"Name": "Eyeball Y"
+		},
+		{
+			"Id": "ParamBrowLY",
+			"GroupId": "ParamGroup2",
+			"Name": "BrowL Y"
+		},
+		{
+			"Id": "ParamBrowRY",
+			"GroupId": "ParamGroup2",
+			"Name": "BrowR Y"
+		},
+		{
+			"Id": "ParamEyeL",
+			"GroupId": "ParamGroup2",
+			"Name": "Eye L"
+		},
+		{
+			"Id": "ParamEyeR",
+			"GroupId": "ParamGroup2",
+			"Name": "Eye R"
+		},
+		{
+			"Id": "ParamMouthForm",
+			"GroupId": "ParamGroup3",
+			"Name": "Mouth Form"
+		},
+		{
+			"Id": "ParamMouthOpenY",
+			"GroupId": "ParamGroup3",
+			"Name": "Mouth Open"
+		},
+		{
+			"Id": "ParamMouthFunnel",
+			"GroupId": "ParamGroup3",
+			"Name": "Mouth Funnel"
+		},
+		{
+			"Id": "ParamMouthPressLipOpen",
+			"GroupId": "ParamGroup3",
+			"Name": "Mouth Press LipOpen"
+		},
+		{
+			"Id": "ParamMouthShrug",
+			"GroupId": "ParamGroup3",
+			"Name": "Mouth Shrug"
+		},
+		{
+			"Id": "ParamMouthPuckerWiden",
+			"GroupId": "ParamGroup3",
+			"Name": "Mouth Pucker Widen"
+		},
+		{
+			"Id": "ParamMouthX",
+			"GroupId": "ParamGroup3",
+			"Name": "Mouth X"
+		},
+		{
+			"Id": "ParamJawOpen",
+			"GroupId": "ParamGroup3",
+			"Name": "Jaw Open"
+		},
+		{
+			"Id": "ParamHairFront",
+			"GroupId": "ParamGroup4",
+			"Name": "Hair Move Front"
+		},
+		{
+			"Id": "ParamHairFront2",
+			"GroupId": "ParamGroup4",
+			"Name": "Hair Move Front"
+		},
+		{
+			"Id": "ParamHairFront3",
+			"GroupId": "ParamGroup4",
+			"Name": "Hair Move FrontY"
+		},
+		{
+			"Id": "ParamHairFronz",
+			"GroupId": "ParamGroup4",
+			"Name": "Hair Move Frontz"
+		},
+		{
+			"Id": "ParamHairFronz2",
+			"GroupId": "ParamGroup4",
+			"Name": "Hair Move Frontz"
+		},
+		{
+			"Id": "ParamHairFronc",
+			"GroupId": "ParamGroup4",
+			"Name": "Hair Move Frontc"
+		},
+		{
+			"Id": "ParamHairFronc2",
+			"GroupId": "ParamGroup4",
+			"Name": "Hair Move Frontc"
+		},
+		{
+			"Id": "ParamHairBack",
+			"GroupId": "ParamGroup4",
+			"Name": "Hair Move Back"
+		},
+		{
+			"Id": "ParamHairBack2",
+			"GroupId": "ParamGroup4",
+			"Name": "Hair Move Back"
+		},
+		{
+			"Id": "ParamHairBack3",
+			"GroupId": "ParamGroup4",
+			"Name": "Hair Move Back"
+		},
+		{
+			"Id": "ParamHairBack4",
+			"GroupId": "ParamGroup4",
+			"Name": "Hair Move Back"
+		},
+		{
+			"Id": "ParamHairBack5",
+			"GroupId": "ParamGroup4",
+			"Name": "Hair Move Back"
+		},
+		{
+			"Id": "ParamboobX",
+			"GroupId": "ParamGroup4",
+			"Name": "boobX 1"
+		},
+		{
+			"Id": "ParamboobX2",
+			"GroupId": "ParamGroup4",
+			"Name": "boobX 2"
+		},
+		{
+			"Id": "ParamboobY",
+			"GroupId": "ParamGroup4",
+			"Name": "boobY 1"
+		},
+		{
+			"Id": "ParamboobY2",
+			"GroupId": "ParamGroup4",
+			"Name": "boobY 2"
+		},
+		{
+			"Id": "Parambbsl",
+			"GroupId": "ParamGroup4",
+			"Name": "bb s 1"
+		},
+		{
+			"Id": "Parambbsl2",
+			"GroupId": "ParamGroup4",
+			"Name": "bb s 1"
+		},
+		{
+			"Id": "Parambbsr",
+			"GroupId": "ParamGroup4",
+			"Name": "bb s 2"
+		},
+		{
+			"Id": "Parambbsr2",
+			"GroupId": "ParamGroup4",
+			"Name": "bb s 2"
+		},
+		{
+			"Id": "Paramhand1",
+			"GroupId": "ParamGroup4",
+			"Name": "hand 1"
+		},
+		{
+			"Id": "Paramhand2",
+			"GroupId": "ParamGroup4",
+			"Name": "hand 1"
+		},
+		{
+			"Id": "Paramhands1",
+			"GroupId": "ParamGroup4",
+			"Name": "hand 2"
+		},
+		{
+			"Id": "Paramhands2",
+			"GroupId": "ParamGroup4",
+			"Name": "hand 2"
+		},
+		{
+			"Id": "Paramhands3",
+			"GroupId": "ParamGroup4",
+			"Name": "hand 2"
+		},
+		{
+			"Id": "Paramslev",
+			"GroupId": "ParamGroup4",
+			"Name": "slev 1"
+		},
+		{
+			"Id": "Paramslev2",
+			"GroupId": "ParamGroup4",
+			"Name": "slev 1"
+		},
+		{
+			"Id": "Paramslev3",
+			"GroupId": "ParamGroup4",
+			"Name": "slev 1"
+		},
+		{
+			"Id": "Paramslev4",
+			"GroupId": "ParamGroup4",
+			"Name": "slev 1"
+		},
+		{
+			"Id": "Paramslev5",
+			"GroupId": "ParamGroup4",
+			"Name": "slev 1"
+		},
+		{
+			"Id": "Paramslevs",
+			"GroupId": "ParamGroup4",
+			"Name": "slev 2"
+		},
+		{
+			"Id": "Paramslevs2",
+			"GroupId": "ParamGroup4",
+			"Name": "slev 2"
+		},
+		{
+			"Id": "Paramslevs3",
+			"GroupId": "ParamGroup4",
+			"Name": "slev 2"
+		},
+		{
+			"Id": "Paramslevs4",
+			"GroupId": "ParamGroup4",
+			"Name": "slev 2"
+		},
+		{
+			"Id": "Paramslevs5",
+			"GroupId": "ParamGroup4",
+			"Name": "slev 2"
+		},
+		{
+			"Id": "ParamskirtX",
+			"GroupId": "ParamGroup4",
+			"Name": "skirt X"
+		},
+		{
+			"Id": "ParamskirtX2",
+			"GroupId": "ParamGroup4",
+			"Name": "skirt X"
+		},
+		{
+			"Id": "ParamskirtY",
+			"GroupId": "ParamGroup4",
+			"Name": "skirt Y"
+		},
+		{
+			"Id": "ParamskirtY2",
+			"GroupId": "ParamGroup4",
+			"Name": "skirt Y"
+		},
+		{
+			"Id": "ParamCheek",
+			"GroupId": "ParamGroup5",
+			"Name": "Cheek"
+		},
+		{
+			"Id": "ParamBiaoQ1",
+			"GroupId": "ParamGroup5",
+			"Name": "表情 1"
+		},
+		{
+			"Id": "ParamBiaoQ2",
+			"GroupId": "ParamGroup5",
+			"Name": "表情 2"
+		},
+		{
+			"Id": "ParamBiaoQ3",
+			"GroupId": "ParamGroup5",
+			"Name": "表情 3"
+		},
+		{
+			"Id": "ParamBiaoQ4",
+			"GroupId": "ParamGroup5",
+			"Name": "表情 4"
+		},
+		{
+			"Id": "ParamBiaoQ5",
+			"GroupId": "ParamGroup5",
+			"Name": "表情 5"
+		},
+		{
+			"Id": "ParamBiaoQ6",
+			"GroupId": "ParamGroup5",
+			"Name": "表情 6"
+		},
+		{
+			"Id": "ParamBiaoQ7",
+			"GroupId": "ParamGroup5",
+			"Name": "表情 7"
+		},
+		{
+			"Id": "Param_Angle_Rotation_1_ArtMesh109",
+			"GroupId": "ParamGroup6",
+			"Name": "[0]色彩平衡 1 拷贝 2"
+		},
+		{
+			"Id": "Param_Angle_Rotation_2_ArtMesh109",
+			"GroupId": "ParamGroup6",
+			"Name": "[1]色彩平衡 1 拷贝 2"
+		},
+		{
+			"Id": "Param_Angle_Rotation_3_ArtMesh109",
+			"GroupId": "ParamGroup6",
+			"Name": "[2]色彩平衡 1 拷贝 2"
+		},
+		{
+			"Id": "Param_Angle_Rotation_4_ArtMesh109",
+			"GroupId": "ParamGroup6",
+			"Name": "[3]色彩平衡 1 拷贝 2"
+		},
+		{
+			"Id": "Param_Angle_Rotation_5_ArtMesh109",
+			"GroupId": "ParamGroup6",
+			"Name": "[4]色彩平衡 1 拷贝 2"
+		},
+		{
+			"Id": "Param_Angle_Rotation_6_ArtMesh109",
+			"GroupId": "ParamGroup6",
+			"Name": "[5]色彩平衡 1 拷贝 2"
+		},
+		{
+			"Id": "Param_Angle_Rotation_7_ArtMesh109",
+			"GroupId": "ParamGroup6",
+			"Name": "[5]色彩平衡 1 拷贝 2"
+		},
+		{
+			"Id": "Param_Angle_Rotation_1_ArtMesh110",
+			"GroupId": "ParamGroup7",
+			"Name": "[0]色彩平衡 1 拷贝 2"
+		},
+		{
+			"Id": "Param_Angle_Rotation_2_ArtMesh110",
+			"GroupId": "ParamGroup7",
+			"Name": "[1]色彩平衡 1 拷贝 2"
+		},
+		{
+			"Id": "Param_Angle_Rotation_3_ArtMesh110",
+			"GroupId": "ParamGroup7",
+			"Name": "[2]色彩平衡 1 拷贝 2"
+		},
+		{
+			"Id": "Param_Angle_Rotation_4_ArtMesh110",
+			"GroupId": "ParamGroup7",
+			"Name": "[3]色彩平衡 1 拷贝 2"
+		},
+		{
+			"Id": "Param_Angle_Rotation_5_ArtMesh110",
+			"GroupId": "ParamGroup7",
+			"Name": "[4]色彩平衡 1 拷贝 2"
+		},
+		{
+			"Id": "Param_Angle_Rotation_6_ArtMesh110",
+			"GroupId": "ParamGroup7",
+			"Name": "[5]色彩平衡 1 拷贝 2"
+		},
+		{
+			"Id": "Param_Angle_Rotation_7_ArtMesh110",
+			"GroupId": "ParamGroup7",
+			"Name": "[5]色彩平衡 1 拷贝 2"
+		},
+		{
+			"Id": "Param_Angle_Rotation_1_ArtMesh107",
+			"GroupId": "ParamGroup8",
+			"Name": "[0]色彩平衡 1 拷贝 4"
+		},
+		{
+			"Id": "Param_Angle_Rotation_2_ArtMesh107",
+			"GroupId": "ParamGroup8",
+			"Name": "[1]色彩平衡 1 拷贝 4"
+		},
+		{
+			"Id": "Param_Angle_Rotation_3_ArtMesh107",
+			"GroupId": "ParamGroup8",
+			"Name": "[2]色彩平衡 1 拷贝 4"
+		},
+		{
+			"Id": "Param_Angle_Rotation_4_ArtMesh107",
+			"GroupId": "ParamGroup8",
+			"Name": "[3]色彩平衡 1 拷贝 4"
+		},
+		{
+			"Id": "Param_Angle_Rotation_5_ArtMesh107",
+			"GroupId": "ParamGroup8",
+			"Name": "[4]色彩平衡 1 拷贝 4"
+		},
+		{
+			"Id": "Param_Angle_Rotation_1_ArtMesh108",
+			"GroupId": "ParamGroup10",
+			"Name": "[0]色彩平衡 1 拷贝 4"
+		},
+		{
+			"Id": "Param_Angle_Rotation_2_ArtMesh108",
+			"GroupId": "ParamGroup10",
+			"Name": "[1]色彩平衡 1 拷贝 4"
+		},
+		{
+			"Id": "Param_Angle_Rotation_3_ArtMesh108",
+			"GroupId": "ParamGroup10",
+			"Name": "[2]色彩平衡 1 拷贝 4"
+		},
+		{
+			"Id": "Param_Angle_Rotation_4_ArtMesh108",
+			"GroupId": "ParamGroup10",
+			"Name": "[3]色彩平衡 1 拷贝 4"
+		},
+		{
+			"Id": "Param_Angle_Rotation_5_ArtMesh108",
+			"GroupId": "ParamGroup10",
+			"Name": "[4]色彩平衡 1 拷贝 4"
+		},
+		{
+			"Id": "Param_Angle_Rotation_1_ArtMesh101",
+			"GroupId": "ParamGroup9",
+			"Name": "[0]色彩平衡 1 拷贝 10"
+		},
+		{
+			"Id": "Param_Angle_Rotation_2_ArtMesh101",
+			"GroupId": "ParamGroup9",
+			"Name": "[1]色彩平衡 1 拷贝 10"
+		},
+		{
+			"Id": "Param_Angle_Rotation_3_ArtMesh101",
+			"GroupId": "ParamGroup9",
+			"Name": "[2]色彩平衡 1 拷贝 10"
+		},
+		{
+			"Id": "Param_Angle_Rotation_4_ArtMesh101",
+			"GroupId": "ParamGroup9",
+			"Name": "[3]色彩平衡 1 拷贝 10"
+		},
+		{
+			"Id": "Param_Angle_Rotation_5_ArtMesh101",
+			"GroupId": "ParamGroup9",
+			"Name": "[4]色彩平衡 1 拷贝 10"
+		},
+		{
+			"Id": "Param_Angle_Rotation_1_ArtMesh102",
+			"GroupId": "ParamGroup11",
+			"Name": "[0]色彩平衡 1 拷贝 10"
+		},
+		{
+			"Id": "Param_Angle_Rotation_2_ArtMesh102",
+			"GroupId": "ParamGroup11",
+			"Name": "[1]色彩平衡 1 拷贝 10"
+		},
+		{
+			"Id": "Param_Angle_Rotation_3_ArtMesh102",
+			"GroupId": "ParamGroup11",
+			"Name": "[2]色彩平衡 1 拷贝 10"
+		},
+		{
+			"Id": "Param_Angle_Rotation_4_ArtMesh102",
+			"GroupId": "ParamGroup11",
+			"Name": "[3]色彩平衡 1 拷贝 10"
+		},
+		{
+			"Id": "Param_Angle_Rotation_5_ArtMesh102",
+			"GroupId": "ParamGroup11",
+			"Name": "[4]色彩平衡 1 拷贝 10"
+		}
+	],
+	"ParameterGroups": [
+		{
+			"Id": "ParamGroup",
+			"GroupId": "",
+			"Name": "Angle"
+		},
+		{
+			"Id": "ParamGroup2",
+			"GroupId": "",
+			"Name": "Eyes/Brows"
+		},
+		{
+			"Id": "ParamGroup3",
+			"GroupId": "",
+			"Name": "Mouth"
+		},
+		{
+			"Id": "ParamGroup4",
+			"GroupId": "",
+			"Name": "Wave"
+		},
+		{
+			"Id": "ParamGroup5",
+			"GroupId": "",
+			"Name": "EXP"
+		},
+		{
+			"Id": "ParamGroup6",
+			"GroupId": "",
+			"Name": "色彩平衡 1 拷贝 2"
+		},
+		{
+			"Id": "ParamGroup7",
+			"GroupId": "",
+			"Name": "色彩平衡 1 拷贝 2"
+		},
+		{
+			"Id": "ParamGroup8",
+			"GroupId": "",
+			"Name": "色彩平衡 1 拷贝 4"
+		},
+		{
+			"Id": "ParamGroup10",
+			"GroupId": "",
+			"Name": "色彩平衡 1 拷贝 4"
+		},
+		{
+			"Id": "ParamGroup9",
+			"GroupId": "",
+			"Name": "色彩平衡 1 拷贝 10"
+		},
+		{
+			"Id": "ParamGroup11",
+			"GroupId": "",
+			"Name": "色彩平衡 1 拷贝 10"
+		}
+	],
+	"Parts": [
+		{
+			"Id": "Part",
+			"Name": "掏耳朵手"
+		},
+		{
+			"Id": "Part2",
+			"Name": "表情"
+		},
+		{
+			"Id": "Part3",
+			"Name": "头"
+		},
+		{
+			"Id": "Part20",
+			"Name": "身体"
+		},
+		{
+			"Id": "Part24",
+			"Name": "手"
+		},
+		{
+			"Id": "Part10",
+			"Name": "角"
+		},
+		{
+			"Id": "Part25",
+			"Name": "后发"
+		},
+		{
+			"Id": "Part26",
+			"Name": "双马尾"
+		},
+		{
+			"Id": "Part27",
+			"Name": "后脑勺"
+		},
+		{
+			"Id": "Part13",
+			"Name": "部件26"
+		},
+		{
+			"Id": "Part4",
+			"Name": "头发高光"
+		},
+		{
+			"Id": "Part5",
+			"Name": "头饰"
+		},
+		{
+			"Id": "Part23",
+			"Name": "左眉毛"
+		},
+		{
+			"Id": "Part6",
+			"Name": "左眉毛"
+		},
+		{
+			"Id": "Part9",
+			"Name": "刘海"
+		},
+		{
+			"Id": "Part11",
+			"Name": "嘴巴"
+		},
+		{
+			"Id": "Part12",
+			"Name": "鼻子"
+		},
+		{
+			"Id": "Part8",
+			"Name": "部件26"
+		},
+		{
+			"Id": "Part17",
+			"Name": "脸"
+		},
+		{
+			"Id": "Part7",
+			"Name": "左耳"
+		},
+		{
+			"Id": "Part18",
+			"Name": "右耳"
+		},
+		{
+			"Id": "Part19",
+			"Name": "鬓角"
+		},
+		{
+			"Id": "Part22",
+			"Name": "胸部"
+		},
+		{
+			"Id": "Part33",
+			"Name": "B"
+		},
+		{
+			"Id": "Part32",
+			"Name": "A"
+		},
+		{
+			"Id": "Part35",
+			"Name": "腿"
+		},
+		{
+			"Id": "Part37",
+			"Name": "部件37"
+		},
+		{
+			"Id": "Part34",
+			"Name": "部件37"
+		},
+		{
+			"Id": "Part36",
+			"Name": "部件38"
+		},
+		{
+			"Id": "Part45",
+			"Name": "部件49"
+		},
+		{
+			"Id": "Part44",
+			"Name": "部件49"
+		},
+		{
+			"Id": "Part42",
+			"Name": "部件45"
+		},
+		{
+			"Id": "Part41",
+			"Name": "部件45"
+		},
+		{
+			"Id": "ArtMesh109_Skinning2",
+			"Name": "色彩平衡 1 拷贝 2(蒙皮)"
+		},
+		{
+			"Id": "Part30",
+			"Name": "色彩平衡 1 拷贝 2(旋转)"
+		},
+		{
+			"Id": "ArtMesh109_Skinning",
+			"Name": "色彩平衡 1 拷贝 2(蒙皮)"
+		},
+		{
+			"Id": "Part14",
+			"Name": "色彩平衡 1 拷贝 2(旋转)"
+		},
+		{
+			"Id": "Part29",
+			"Name": "左眼睛"
+		},
+		{
+			"Id": "Part31",
+			"Name": "左眼睛"
+		},
+		{
+			"Id": "Part21",
+			"Name": "左眼睛"
+		},
+		{
+			"Id": "Part15",
+			"Name": "左眼睛"
+		},
+		{
+			"Id": "ArtMesh101_Skinning2",
+			"Name": "色彩平衡 1 拷贝 10(蒙皮)"
+		},
+		{
+			"Id": "Part46",
+			"Name": "色彩平衡 1 拷贝 10(旋转)"
+		},
+		{
+			"Id": "ArtMesh101_Skinning",
+			"Name": "色彩平衡 1 拷贝 10(蒙皮)"
+		},
+		{
+			"Id": "Part40",
+			"Name": "色彩平衡 1 拷贝 10(旋转)"
+		},
+		{
+			"Id": "ArtMesh107_Skinning2",
+			"Name": "色彩平衡 1 拷贝 4(蒙皮)"
+		},
+		{
+			"Id": "Part43",
+			"Name": "色彩平衡 1 拷贝 4(旋转)"
+		},
+		{
+			"Id": "ArtMesh107_Skinning",
+			"Name": "色彩平衡 1 拷贝 4(蒙皮)"
+		},
+		{
+			"Id": "Part39",
+			"Name": "色彩平衡 1 拷贝 4(旋转)"
+		},
+		{
+			"Id": "Part28",
+			"Name": "左眼球"
+		},
+		{
+			"Id": "Part16",
+			"Name": "左眼球"
+		}
+	]
+}
