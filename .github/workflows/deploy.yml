@@ -35,18 +35,34 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # ตรวจ export ก่อน build
+      - name: Check Live2DAvatar export
+        run: |
+          echo "=== Live2DAvatar.tsx ==="
+          grep -n "Live2DAvatar" src/components/Live2DAvatar.tsx || true
+
+          echo "=== App import ==="
+          grep -n "Live2DAvatar" src/App.tsx || true
+
       - name: Build
         run: npm run build
 
-      # ตรวจว่า Live2D ถูกนำเข้า dist จริง
-      - name: Check Live2D files
+      # ตรวจไฟล์ Live2D หลัง build
+      - name: Verify Live2D assets
         run: |
           echo "=== Live2D files in dist ==="
           find dist -type f \( \
-            -name "*.model3.json" -o \
-            -name "*.moc3" -o \
-            -name "*.physics3.json" \
+            -name "*.model3.json" \
+            -o -name "*.moc3" \
+            -o -name "*.png" \
+            -o -name "*.physics3.json" \
           \) | sort
+
+          echo "=== File sizes ==="
+          find dist -type f \( \
+            -name "*.moc3" \
+            -o -name "*.png" \
+          \) -exec ls -lh {} \;
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -54,7 +70,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist'
+          path: ./dist
 
       - name: Deploy to GitHub Pages
         id: deployment
