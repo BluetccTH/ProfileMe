@@ -1,6 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
+const PNG_SIGNATURE = Buffer.from([
+  0x89, 0x50, 0x4e, 0x47,
+  0x0d, 0x0a, 0x1a, 0x0a
+]);
+
 function assertFile(filePath, label) {
   if (!fs.existsSync(filePath)) {
     throw new Error(`${label} not found: ${filePath}`);
@@ -28,16 +33,11 @@ function validateMoc3(buffer, filePath) {
 }
 
 function validatePng(buffer, filePath) {
-  const pngSignature = Buffer.from([
-    0x89, 0x50, 0x4e, 0x47,
-    0x0d, 0x0a, 0x1a, 0x0a
-  ]);
-
   if (buffer.length < 100) {
     throw new Error(`.png file is too small: ${buffer.length} bytes`);
   }
 
-  if (!buffer.subarray(0, 8).equals(pngSignature)) {
+  if (!buffer.subarray(0, 8).equals(PNG_SIGNATURE)) {
     throw new Error(
       `.png validation failed for ${path.basename(filePath)}: ` +
       `invalid PNG signature ${buffer.subarray(0, 8).toString('hex')}`
@@ -48,6 +48,38 @@ function validatePng(buffer, filePath) {
 function writeBinary(filePath, buffer) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   fs.writeFileSync(filePath, buffer);
+}
+
+function normalizePng(buffer, filePath) {
+  // A previous UTF-8/text edit converted the first PNG byte 0x89 into the
+  // three-byte UTF-8 replacement character EF BF BD. Restore that byte only.
+  const corruptedPrefix = Buffer.from([0xef, 0xbf, 0xbd, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+  if (buffer.subarray(0, corruptedPrefix.length).equals(corruptedPrefix)) {
+    console.warn(
+      `[Live2D Auto-Restore] Repairing UTF-8 replacement-character prefix in ${path.basename(filePath)}.`
+    );
+    return Buffer.concat([
+      PNG_SIGNATURE,
+      buffer.subarray(corruptedPrefix.length)
+    ]);
+  }
+
+  // Another attempted repair removed the replacement character entirely,
+  // leaving the PNG signature as 50 4E 47.... Restore the missing 0x89.
+  const missingFirstByte = Buffer.from([0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+  if (buffer.subarray(0, missingFirstByte.length).equals(missingFirstByte)) {
+    console.warn(
+      `[Live2D Auto-Restore] Repairing missing PNG signature byte in ${path.basename(filePath)}.`
+    );
+    return Buffer.concat([
+      Buffer.from([0x89]),
+      buffer
+    ]);
+  }
+
+  return buffer;
 }
 
 function restoreAssets() {
@@ -63,10 +95,6 @@ function restoreAssets() {
     'MassageSeacubus_rei.4096/texture_00.png'
   );
 
-  // This repository already contains the original PNG alongside the working
-  // texture path. The working texture was previously damaged by text/UTF-8
-  // handling, so use the original binary instead of trying to reconstruct a
-  // 3.6 MB PNG from a giant text file.
   const originalPngPath = path.join(
     live2dDir,
     'MassageSeacubus_rei.4096/texture_00_orig.png'
@@ -76,7 +104,8 @@ function restoreAssets() {
   assertFile(originalPngPath, 'Original PNG source');
 
   const mocBin = fs.readFileSync(mocPath);
-  const pngBin = fs.readFileSync(originalPngPath);
+  const pngSource = fs.readFileSync(originalPngPath);
+  const pngBin = normalizePng(pngSource, originalPngPath);
 
   validateMoc3(mocBin, mocPath);
   validatePng(pngBin, originalPngPath);
@@ -85,14 +114,22 @@ function restoreAssets() {
     throw new Error('CRITICAL: MOC3 and PNG are identical binaries.');
   }
 
-  // Always restore the canonical texture_00.png from the original binary.
-  // This makes the two assets separate files with their real binary bytes.
   writeBinary(pngPath, pngBin);
 
+  // Verify the actual public files, not just the in-memory buffers.
+  const restoredMoc = fs.readFileSync(mocPath);
+  const restoredPng = fs.readFileSync(pngPath);
+  validateMoc3(restoredMoc, mocPath);
+  validatePng(restoredPng, pngPath);
+
+  if (!restoredMoc.equals(mocBin) || !restoredPng.equals(pngBin)) {
+    throw new Error('CRITICAL: public Live2D binaries differ from validated source binaries.');
+  }
+
   console.log('[Live2D Auto-Restore] Source binaries are valid.');
-  console.log(`  MOC3 source : ${mocBin.length} bytes`);
-  console.log(`  PNG source  : ${pngBin.length} bytes`);
-  console.log('  PNG restored from texture_00_orig.png');
+  console.log(`  MOC3 : ${mocBin.length} bytes`);
+  console.log(`  PNG  : ${pngBin.length} bytes`);
+  console.log(`  PNG header: ${pngBin.subarray(0, 8).toString('hex')}`);
 
   const distDir = path.resolve(__dirname, '../dist');
 
