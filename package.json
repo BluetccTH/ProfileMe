@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "node scripts/restore-live2d.cjs && vite build && node scripts/verify-live2d.cjs",
-    "verify:live2d": "node scripts/verify-live2d.cjs",
+    "verify:live2d": "npm run build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
@@ -22,6 +22,7 @@
     "express": "^4.21.2",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
+    "pixi-live2d-display": "npm:@naari3/pixi-live2d-display@^1.2.5",
     "pixi.js": "^8.14.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
