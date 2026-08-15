@@ -1,8 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 
-const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x1a]);
-
 function assertFile(filePath, label) {
   if (!fs.existsSync(filePath)) throw new Error(`${label} not found: ${filePath}`);
   const stat = fs.statSync(filePath);
@@ -22,7 +20,10 @@ function validateMoc3(buffer, filePath) {
 }
 
 function validatePng(buffer, filePath) {
-  if (buffer.length < 100 || !buffer.subarray(0, 8).equals(PNG_SIGNATURE)) {
+  // PNG signature is exactly 89 50 4E 47 0D 0A 1A 0A.
+  // Do not inspect/re-encode pixel data: the native texture must remain byte-for-byte intact.
+  const signature = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  if (buffer.length < 24 || !buffer.subarray(0, 8).equals(signature)) {
     throw new Error(`.png validation failed for ${path.basename(filePath)}`);
   }
 }
@@ -46,7 +47,7 @@ function validateTextureSet(textureDir) {
 
 function restoreAssets() {
   // Active model: original MassageSeacubus_rei.
-  // Preserve all native assets; no texture resize or recompression.
+  // Preserve all native assets; no texture resize, recompression, or conversion.
   const sourceDir = path.resolve(__dirname, '../public/live2d');
   const publicDir = path.resolve(__dirname, '../public/live2d/MassageSeacubus_rei');
 
@@ -76,8 +77,6 @@ function restoreAssets() {
   const publicTextureDir = path.join(publicDir, 'MassageSeacubus_rei.4096');
   for (const name of textures) copyBinary(path.join(sourceTextureDir, name), path.join(publicTextureDir, name));
 
-  // The model references these expressions/motions by filename from its model directory.
-  // Copy every matching native animation/expression file belonging to this model.
   const animationFiles = fs.readdirSync(sourceDir).filter(name =>
     /^(?:[1-8]\.exp3\.json|zidong\.motion3\.json)$/i.test(name)
   );
