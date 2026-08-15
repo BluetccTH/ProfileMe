@@ -1,8 +1,0 @@
-{
-  "name": "Blue.tcc Portfolio",
-  "description": "Premium futuristic cyber portfolio website for Blue.tcc (Chisanupong Renuhom). Features glassmorphism UI, animated particle background, smooth scroll effects, custom cursor, skill progress visualization, project showcase, contact section, responsive mobile-first design, dark cyber theme with neon purple and cyan accents, performance optimized and SEO friendly.",
-  "requestFramePermissions": [],
-  "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
-}
