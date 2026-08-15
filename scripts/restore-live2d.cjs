@@ -3,6 +3,7 @@ const path = require('path');
 
 const MODEL = 'MassageSeacubus_rei';
 const EXPECTED_MOC3_SIZE = 2628790;
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 function assertFile(filePath, label) {
   if (!fs.existsSync(filePath)) throw new Error(`${label} not found: ${filePath}`);
@@ -22,6 +23,17 @@ function validateMoc3(filePath) {
   }
   if (buffer.subarray(0, 4).toString('ascii') !== 'MOC3') {
     throw new Error(`MOC3 magic header is invalid: ${filePath}`);
+  }
+}
+
+function validatePng(filePath) {
+  const buffer = fs.readFileSync(filePath);
+  if (buffer.length < PNG_SIGNATURE.length || !buffer.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)) {
+    const header = buffer.subarray(0, 16).toString('hex').match(/.{1,2}/g)?.join(' ') || '(empty)';
+    throw new Error(`PNG signature is invalid: ${filePath}\nFirst bytes: ${header}`);
+  }
+  if (buffer.length < 12 || buffer.subarray(buffer.length - 12, buffer.length - 8).toString('ascii') !== 'IEND') {
+    throw new Error(`PNG IEND chunk is missing: ${filePath}`);
   }
 }
 
@@ -72,6 +84,12 @@ function validateSource() {
 
   const textures = fs.readdirSync(textureDir).filter(name => /\.png$/i.test(name)).sort();
   if (!textures.length) throw new Error(`No PNG textures found in ${textureDir}`);
+
+  for (const texture of textures) {
+    const texturePath = path.join(textureDir, texture);
+    validatePng(texturePath);
+    console.log(`  PNG OK: ${texture} (${fs.statSync(texturePath).size} bytes)`);
+  }
 
   console.log('[Live2D] Source of truth: public/live2d');
   console.log('[Live2D] Asset copying/modification: DISABLED');
