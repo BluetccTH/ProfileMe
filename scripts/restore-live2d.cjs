@@ -18,106 +18,89 @@ function validateMoc3(buffer, filePath) {
   }
 }
 
-function copyBinary(source, destination) {
-  fs.mkdirSync(path.dirname(destination), { recursive: true });
-  fs.copyFileSync(source, destination);
-}
-
-function listTextures(textureDir) {
-  assertDirectory(textureDir, 'Texture directory');
-  const textures = fs.readdirSync(textureDir)
-    .filter(n => /\.(png|jpg|jpeg|webp)$/i.test(n))
-    .sort();
-  if (!textures.length) throw new Error(`No texture files found: ${textureDir}`);
-  return textures;
-}
-
-function findFallbackFile(primaryRoot, fallbackRoot, relativePath) {
-  const primary = path.join(primaryRoot, relativePath);
-  if (fs.existsSync(primary) && fs.statSync(primary).isFile()) return { path: primary, source: 'live2d' };
-  const fallback = path.join(fallbackRoot, relativePath);
-  if (fs.existsSync(fallback) && fs.statSync(fallback).isFile()) return { path: fallback, source: '海魔完整版' };
-  return null;
-}
-
-function copyIfMissing(primaryRoot, fallbackRoot, relativePath) {
-  const result = findFallbackFile(primaryRoot, fallbackRoot, relativePath);
-  if (!result) throw new Error(`Missing required Live2D asset: ${relativePath}`);
-  const destination = path.join(primaryRoot, relativePath);
-  if (result.source === '海魔完整版') {
-    copyBinary(result.path, destination);
-    console.log(`[Live2D Fallback] Restored missing asset: ${relativePath}`);
+function validateModelJson(filePath, modelName) {
+  assertFile(filePath, 'Model JSON');
+  const model = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  const refs = model.FileReferences || {};
+  if (refs.Moc !== `${modelName}.moc3`) {
+    throw new Error(`Model JSON points to unexpected MOC3: ${refs.Moc || '(missing)'}`);
   }
+  if (!Array.isArray(refs.Textures) || refs.Textures.length === 0) {
+    throw new Error('Model JSON has no texture references');
+  }
+  return model;
 }
 
 function restoreAssets() {
-  // public/live2d is the source of truth.
-  // 海魔完整版 is used only when an asset is genuinely missing.
-  // Binary textures are intentionally NOT decoded or rewritten here.
-  const primaryRoot = path.resolve(__dirname, '../public/live2d');
-  const fallbackRoot = path.resolve(__dirname, '../海魔完整版/MassageSeacubus_full_rei');
+  // public/live2d is the ONLY source of truth.
+  // Do not mix files from 海魔完整版 into this model.
+  // Textures are copied/deployed byte-for-byte and are never resized,
+  // decoded, recompressed, or format-converted here.
+  const root = path.resolve(__dirname, '../public/live2d');
   const modelName = 'MassageSeacubus_rei';
 
-  assertDirectory(primaryRoot, 'Primary Live2D directory');
-  assertDirectory(fallbackRoot, 'Live2D fallback directory');
+  assertDirectory(root, 'Live2D directory');
 
-  for (const relativePath of [
-    `${modelName}.model3.json`,
-    `${modelName}.moc3`,
-    `${modelName}.physics3.json`,
-    `${modelName}.cdi3.json`,
-  ]) {
-    copyIfMissing(primaryRoot, fallbackRoot, relativePath);
-  }
+  const modelPath = path.join(root, `${modelName}.model3.json`);
+  const mocPath = path.join(root, `${modelName}.moc3`);
+  const physicsPath = path.join(root, `${modelName}.physics3.json`);
+  const cdiPath = path.join(root, `${modelName}.cdi3.json`);
+  const textureDir = path.join(root, `${modelName}.4096`);
 
-  const primaryTextureDir = path.join(primaryRoot, `${modelName}.4096`);
-  const fallbackTextureDir = path.join(fallbackRoot, `${modelName}.4096`);
-
-  let textures;
-  if (fs.existsSync(primaryTextureDir) && fs.statSync(primaryTextureDir).isDirectory()) {
-    textures = listTextures(primaryTextureDir);
-  } else {
-    assertDirectory(fallbackTextureDir, 'Fallback texture directory');
-    fs.mkdirSync(primaryTextureDir, { recursive: true });
-    for (const name of listTextures(fallbackTextureDir)) {
-      const destination = path.join(primaryTextureDir, name);
-      if (!fs.existsSync(destination)) copyBinary(path.join(fallbackTextureDir, name), destination);
-    }
-    textures = listTextures(primaryTextureDir);
-  }
-
-  // Fill only files referenced by the primary model and only when missing.
-  const modelFile = path.join(primaryRoot, `${modelName}.model3.json`);
-  const model = JSON.parse(fs.readFileSync(modelFile, 'utf8'));
-  const referenced = new Set();
-  const refs = model.FileReferences || {};
-  if (Array.isArray(refs.Expressions)) {
-    for (const expression of refs.Expressions) if (expression.File) referenced.add(expression.File);
-  }
-  if (refs.Motions) {
-    for (const group of Object.values(refs.Motions)) {
-      if (Array.isArray(group)) for (const motion of group) if (motion.File) referenced.add(motion.File);
-    }
-  }
-  for (const relativePath of referenced) copyIfMissing(primaryRoot, fallbackRoot, relativePath);
-
-  const mocPath = path.join(primaryRoot, `${modelName}.moc3`);
+  const model = validateModelJson(modelPath, modelName);
   assertFile(mocPath, 'MOC3');
   validateMoc3(fs.readFileSync(mocPath), mocPath);
+  assertFile(physicsPath, 'Physics');
+  assertFile(cdiPath, 'CDI');
+  assertDirectory(textureDir, 'Texture directory');
 
-  for (const name of textures) assertFile(path.join(primaryTextureDir, name), `Texture ${name}`);
+  const textures = fs.readdirSync(textureDir)
+    .filter(name => /\.(png|jpg|jpeg|webp)$/i.test(name))
+    .sort();
 
-  console.log('[Live2D Auto-Restore] Primary: public/live2d');
-  console.log('[Live2D Auto-Restore] Fallback: 海魔完整版/MassageSeacubus_full_rei');
+  if (!textures.length) throw new Error(`No textures found in ${textureDir}`);
+
+  const referencedTextures = new Set(model.FileReferences.Textures || []);
+  for (const texture of referencedTextures) {
+    assertFile(path.join(textureDir, path.basename(texture)), `Referenced texture ${texture}`);
+  }
+
+  const referenced = new Set();
+  const refs = model.FileReferences || {};
+
+  if (Array.isArray(refs.Expressions)) {
+    for (const expression of refs.Expressions) {
+      if (expression.File) referenced.add(expression.File);
+    }
+  }
+
+  if (refs.Motions) {
+    for (const group of Object.values(refs.Motions)) {
+      if (Array.isArray(group)) {
+        for (const motion of group) {
+          if (motion.File) referenced.add(motion.File);
+        }
+      }
+    }
+  }
+
+  for (const relativePath of referenced) {
+    assertFile(path.join(root, relativePath), `Referenced Live2D asset ${relativePath}`);
+  }
+
+  console.log('[Live2D] Source of truth: public/live2d');
+  console.log('[Live2D] Fallback copying: DISABLED');
+  console.log(`  Model: ${modelName}`);
   console.log(`  MOC3: ${fs.statSync(mocPath).size} bytes`);
   console.log(`  Textures: ${textures.length}`);
-  console.log('  Existing live2d assets preserved; fallback used only when missing.');
-  console.log('  Texture binaries copied byte-for-byte; no resize/recompression/format validation.');
+  console.log('  Texture binaries preserved byte-for-byte.');
+  console.log('  No resize / recompression / format conversion.');
 }
 
-try { restoreAssets(); }
-catch (error) {
-  console.error('\n[Live2D Auto-Restore] FAILED');
+try {
+  restoreAssets();
+} catch (error) {
+  console.error('\n[Live2D] FAILED');
   console.error(error instanceof Error ? error.message : error);
   console.error('');
   process.exit(1);
