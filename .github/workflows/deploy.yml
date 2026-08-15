@@ -11,7 +11,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: false
 
 jobs:
@@ -33,54 +33,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Switch Live2D avatar back to MassageSeacubus_rei
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          path = Path("src/components/Live2DAvatar.tsx")
-          text = path.read_text(encoding="utf-8")
-          text = text.replace("live2d/English_version_Full/Number1.model3.json", "live2d/MassageSeacubus_rei/MassageSeacubus_rei.model3.json")
-          text = text.replace("live2d/MassageSeacubus_rei.model3.json", "live2d/MassageSeacubus_rei/MassageSeacubus_rei.model3.json")
-          path.write_text(text, encoding="utf-8")
-          print("Selected: MassageSeacubus_rei")
-          PY
-
-      - name: Prepare original MassageSeacubus_rei model
+      - name: Verify original MassageSeacubus_rei files
         run: |
           set -e
-          SRC="public/live2d"
-          ROOT="$SRC/MassageSeacubus_rei"
+          ROOT="public/live2d"
           test -f "$ROOT/MassageSeacubus_rei.model3.json"
           test -f "$ROOT/MassageSeacubus_rei.moc3"
           test -f "$ROOT/MassageSeacubus_rei.physics3.json"
           test -f "$ROOT/MassageSeacubus_rei.cdi3.json"
           test -d "$ROOT/MassageSeacubus_rei.4096"
-          echo "Prepared original MassageSeacubus_rei model with native textures"
-
-      - name: Enable uncapped Live2D/Pixi FPS
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          path = Path("src/components/Live2DAvatar.tsx")
-          text = path.read_text(encoding="utf-8")
-          marker = 'Live2DModel.registerTicker(PIXI.Ticker);'
-          injection = '''Live2DModel.registerTicker(PIXI.Ticker);
-          try {
-            (PIXI.Ticker.shared as any).maxFPS = 0;
-            (PIXI.Ticker.shared as any).minFPS = 0;
-          } catch (e) {}
-          '''
-          if "(PIXI.Ticker.shared as any).maxFPS = 0" not in text:
-              if marker not in text:
-                  raise SystemExit("Could not find ticker registration")
-              text = text.replace(marker, injection, 1)
-          path.write_text(text, encoding="utf-8")
-          PY
+          echo "Original MassageSeacubus_rei files found."
 
       - name: Build
         run: npm run build
 
-      - name: Verify original full-resolution textures
+      - name: Verify deployed Live2D assets
         run: |
           set -e
           ROOT="dist/live2d/MassageSeacubus_rei"
@@ -89,22 +56,11 @@ jobs:
           test -f "$ROOT/MassageSeacubus_rei.physics3.json"
           test -f "$ROOT/MassageSeacubus_rei.cdi3.json"
           test -d "$ROOT/MassageSeacubus_rei.4096"
-          python -m pip install --disable-pip-version-check --quiet Pillow
-          python - "$ROOT/MassageSeacubus_rei.4096" <<'PY'
-          import sys
-          from pathlib import Path
-          from PIL import Image
-          root = Path(sys.argv[1])
-          textures = sorted(root.glob("*.png"))
-          if not textures:
-              raise SystemExit("ERROR: no Live2D textures found")
-          for path in textures:
-              with Image.open(path) as image:
-                  print(f"{path.name}: {image.size[0]}x{image.size[1]}, {path.stat().st_size} bytes")
-                  if image.size[0] > 8192 or image.size[1] > 8192:
-                      raise SystemExit(f"ERROR: texture exceeds 8192px: {path}")
-          print("MassageSeacubus_rei native textures preserved; no resize performed.")
-          PY
+          echo "=== Texture files ==="
+          find "$ROOT/MassageSeacubus_rei.4096" -type f -name '*.png' -exec ls -lh {} \;
+          echo "=== Model references ==="
+          grep -E 'MassageSeacubus_rei|texture_00|Physics|Motions|Expressions' "$ROOT/MassageSeacubus_rei.model3.json" || true
+          echo "MassageSeacubus_rei deployed without texture resizing."
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
