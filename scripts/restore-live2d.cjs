@@ -1,12 +1,17 @@
 const fs = require('fs');
 const path = require('path');
 
-const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x1a]);
 
 function assertFile(filePath, label) {
   if (!fs.existsSync(filePath)) throw new Error(`${label} not found: ${filePath}`);
   const stat = fs.statSync(filePath);
   if (!stat.isFile() || stat.size === 0) throw new Error(`${label} is empty or not a file: ${filePath}`);
+}
+
+function assertDirectory(dirPath, label) {
+  if (!fs.existsSync(dirPath)) throw new Error(`${label} not found: ${dirPath}`);
+  if (!fs.statSync(dirPath).isDirectory()) throw new Error(`${label} is not a directory: ${dirPath}`);
 }
 
 function validateMoc3(buffer, filePath) {
@@ -28,7 +33,7 @@ function copyBinary(source, destination) {
 }
 
 function validateTextureSet(textureDir) {
-  assertFile(textureDir, 'Texture directory');
+  assertDirectory(textureDir, 'Texture directory');
   const textures = fs.readdirSync(textureDir).filter(n => n.toLowerCase().endsWith('.png')).sort();
   if (!textures.length) throw new Error(`No PNG textures found: ${textureDir}`);
   for (const name of textures) {
@@ -41,7 +46,7 @@ function validateTextureSet(textureDir) {
 
 function restoreAssets() {
   // Active model: original MassageSeacubus_rei.
-  // Keep its native texture files untouched.
+  // Preserve all native assets; no texture resize or recompression.
   const sourceDir = path.resolve(__dirname, '../public/live2d');
   const publicDir = path.resolve(__dirname, '../public/live2d/MassageSeacubus_rei');
 
@@ -71,6 +76,13 @@ function restoreAssets() {
   const publicTextureDir = path.join(publicDir, 'MassageSeacubus_rei.4096');
   for (const name of textures) copyBinary(path.join(sourceTextureDir, name), path.join(publicTextureDir, name));
 
+  // The model references these expressions/motions by filename from its model directory.
+  // Copy every matching native animation/expression file belonging to this model.
+  const animationFiles = fs.readdirSync(sourceDir).filter(name =>
+    /^(?:[1-8]\.exp3\.json|zidong\.motion3\.json)$/i.test(name)
+  );
+  for (const name of animationFiles) copyBinary(path.join(sourceDir, name), path.join(publicDir, name));
+
   const moc = fs.readFileSync(path.join(publicDir, 'MassageSeacubus_rei.moc3'));
   validateMoc3(moc, path.join(publicDir, 'MassageSeacubus_rei.moc3'));
   validateTextureSet(publicTextureDir);
@@ -78,7 +90,8 @@ function restoreAssets() {
   console.log('[Live2D Auto-Restore] MassageSeacubus_rei restored.');
   console.log(`  MOC3 : ${moc.length} bytes`);
   console.log(`  Textures: ${textures.length}`);
-  console.log('  Native texture resolution preserved; no resize.');
+  console.log(`  Expressions/Motions: ${animationFiles.length}`);
+  console.log('  Native texture resolution preserved; no resize/recompression.');
 }
 
 try { restoreAssets(); }
