@@ -377,16 +377,7 @@ export default function App() {
             ))}
           </ul>
 
-          {/* Support CTA Button */}
-          <div className="hidden md:flex items-center">
-            <a
-              href="https://ezdn.app/blue_tcc"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-xs font-semibold uppercase tracking-widest text-slate-100 backdrop-blur-sm transition-all"
-            >
-              Support
-            </a>
+          
           </div>
 
           {/* Hamburger Menu Icon (Mobile) */}
@@ -453,18 +444,7 @@ export default function App() {
                 </motion.button>
               ))}
 
-              <motion.a
-                variants={{
-                  open: { opacity: 1, y: 0 },
-                  closed: { opacity: 0, y: 20 },
-                }}
-                href="https://ezdn.app/blue_tcc"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full mt-4 py-4 px-6 text-center text-lg font-bold text-white bg-gradient-to-r from-[#6c63ff] to-[#22d3ee] rounded-2xl shadow-[0_0_25px_rgba(108,99,255,0.3)]"
-              >
-                Support
-              </motion.a>
+              
             </motion.div>
           </motion.div>
         )}
@@ -534,7 +514,7 @@ export default function App() {
                   onClick={() => scrollToSection("portfolio")}
                   className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600 text-white font-semibold rounded-full flex items-center gap-2 shadow-lg shadow-blue-500/20 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
                 >
-                  <span>💸 Support</span>
+                  <span>💸 Donate</span>
                 </button>
                 <a
                   href="https://ezdn.app/blue_tcc"
