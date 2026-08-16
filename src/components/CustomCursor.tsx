@@ -113,16 +113,20 @@ export const CustomCursor: React.FC = () => {
 
   return (
     <>
-      {/* Outer Ring Tracker with smooth trailing and hover styling */}
+      {/* Outer Ring Tracker with smooth trailing and 3D depth */}
       <div
         ref={ringRef}
-        className="fixed top-0 left-0 w-8 h-8 border rounded-full pointer-events-none z-[99999] transition-all duration-300 ease-out mix-blend-difference"
+        className="fixed top-0 left-0 border rounded-full pointer-events-none z-[99999] transition-all duration-300 ease-out mix-blend-difference"
         style={{
-          borderColor: isHovering ? "#22d3ee" : "#a78bfa",
-          backgroundColor: isHovering ? "rgba(34, 211, 238, 0.15)" : "transparent",
-          boxShadow: isHovering ? "0 0 15px rgba(34, 211, 238, 0.6)" : "none",
           width: isHovering ? "42px" : "28px",
           height: isHovering ? "42px" : "28px",
+          border: "1px solid transparent",
+          background: isHovering
+            ? "linear-gradient(rgba(34, 211, 238, 0.12), rgba(34, 211, 238, 0.02)) padding-box, linear-gradient(145deg, rgba(233, 250, 255, 0.95) 0%, rgba(34, 211, 238, 0.9) 28%, rgba(34, 211, 238, 0.48) 60%, rgba(10, 80, 112, 0.9) 100%) border-box"
+            : "linear-gradient(rgba(167, 139, 250, 0.025), rgba(167, 139, 250, 0.01)) padding-box, linear-gradient(145deg, rgba(235, 228, 255, 0.92) 0%, rgba(167, 139, 250, 0.86) 32%, rgba(118, 83, 195, 0.55) 65%, rgba(42, 27, 83, 0.95) 100%) border-box",
+          boxShadow: isHovering
+            ? "inset 2px 2px 3px rgba(255,255,255,0.42), inset -2px -2px 3px rgba(0,35,55,0.55), 0 0 12px rgba(34,211,238,0.42), 0 0 24px rgba(34,211,238,0.16)"
+            : "inset 2px 2px 3px rgba(255,255,255,0.3), inset -2px -2px 3px rgba(25,10,60,0.6), 0 0 8px rgba(167,139,250,0.18)",
         }}
       />
       {/* Tight Inner Dot aligned perfectly with physical cursor */}
@@ -133,4 +137,3 @@ export const CustomCursor: React.FC = () => {
     </>
   );
 };
-
