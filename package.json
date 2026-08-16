@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
-    "build": "node scripts/restore-live2d.cjs && vite build && node scripts/verify-live2d.cjs",
+    "build": "node scripts/prepare-ui.cjs && node scripts/restore-live2d.cjs && vite build && node scripts/verify-live2d.cjs",
     "verify:live2d": "npm run build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
