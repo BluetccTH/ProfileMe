@@ -385,7 +385,7 @@ export default function App() {
               rel="noopener noreferrer"
               className="px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-xs font-semibold uppercase tracking-widest text-slate-100 backdrop-blur-sm transition-all"
             >
-              💸 Support
+              Support
             </a>
           </div>
 
@@ -463,7 +463,7 @@ export default function App() {
                 rel="noopener noreferrer"
                 className="w-full mt-4 py-4 px-6 text-center text-lg font-bold text-white bg-gradient-to-r from-[#6c63ff] to-[#22d3ee] rounded-2xl shadow-[0_0_25px_rgba(108,99,255,0.3)]"
               >
-                💸 Support Dev
+                Support
               </motion.a>
             </motion.div>
           </motion.div>
@@ -534,10 +534,10 @@ export default function App() {
                   onClick={() => scrollToSection("portfolio")}
                   className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600 text-white font-semibold rounded-full flex items-center gap-2 shadow-lg shadow-blue-500/20 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
                 >
-                  <span>🚀 Explore Products</span>
+                  <span>💸 Support</span>
                 </button>
                 <a
-                  href="https://discord.gg/WTYgx6CPeh"
+                  href="https://ezdn.app/blue_tcc"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/30 rounded-full font-semibold text-white flex items-center gap-2 hover:-translate-y-0.5 transition-all duration-300 backdrop-blur-sm"
