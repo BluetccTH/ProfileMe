@@ -36,11 +36,15 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
         setLoading(true);
         setError(null);
 
-        // Cubism 5 requires a Cubism 5 Core. Keep the repo's local Core as the source.
+        // Cubism 5 requires a Cubism 5 Core. Load the local runtime first.
         if (!(window as any).Live2DCubismCore) {
           await new Promise<void>((resolve, reject) => {
-            const existing = document.querySelector('script[src*="live2dcubismcore"]') as HTMLScriptElement | null;
+            const existing = document.querySelector("script[src*='live2dcubismcore']") as HTMLScriptElement | null;
             if (existing) {
+              if ((window as any).Live2DCubismCore) {
+                resolve();
+                return;
+              }
               existing.addEventListener("load", () => resolve(), { once: true });
               existing.addEventListener("error", () => reject(new Error("Cubism Core failed to load")), { once: true });
               return;
@@ -59,13 +63,10 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
         if (!(window as any).Live2DCubismCore) {
           throw new Error("Cubism 5 Core is not available");
         }
+        if (!canvasRef.current || !containerRef.current || disposed) return;
 
-        // The Cubism 5 runtime is designed for PixiJS 8. Do not mix it with
-        // the old pixi-live2d-display/cubism4 adapter or PixiJS 7.
         (window as any).PIXI = PIXI;
         Live2DModel.registerTicker(PIXI.Ticker);
-
-        if (!canvasRef.current || !containerRef.current || disposed) return;
 
         const rect = containerRef.current.getBoundingClientRect();
         const appWidth = Math.max(1, rect.width || width);
@@ -87,13 +88,31 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
           app.destroy(true);
           return;
         }
-
         appRef.current = app;
 
-        const modelUrl = resolveAssetUrl("live2d/MassageSeacubus_rei.model3.json");
-        console.info("[Live2D] Cubism 5 model URL:", modelUrl);
+        // Fetch and normalize the model settings before handing them to the
+        // Cubism 5 adapter. Some model3.json files omit HitAreas entirely;
+        // the adapter expects an array and calls .map() during initialization.
+        const modelUrl = `${resolveAssetUrl("live2d/MassageSeacubus_rei.model3.json")}?v=20260829`;
+        const modelResponse = await fetch(modelUrl, { cache: "no-store" });
+        if (!modelResponse.ok) {
+          throw new Error(`model3.json HTTP ${modelResponse.status}`);
+        }
+        const settings = await modelResponse.json();
+        if (!settings || typeof settings !== "object") {
+          throw new Error("model3.json returned an invalid JSON object");
+        }
+        settings.HitAreas = Array.isArray(settings.HitAreas) ? settings.HitAreas : [];
+        settings.url = modelUrl;
+        console.info("[Live2D] Cubism 5 model settings normalized", {
+          url: modelUrl,
+          hitAreas: settings.HitAreas.length,
+          textures: Array.isArray(settings?.FileReferences?.Textures)
+            ? settings.FileReferences.Textures.length
+            : 0,
+        });
 
-        const model = await Live2DModel.from(modelUrl, {
+        const model = await Live2DModel.from(settings, {
           autoHitTest: false,
           autoFocus: false,
           autoUpdate: true,
@@ -105,7 +124,6 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
           app.destroy(true);
           return;
         }
-
         modelRef.current = model;
 
         const scale = Math.min(appWidth / model.width, appHeight / model.height) * 3.1;
@@ -114,7 +132,6 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
         model.position.set(appWidth / 2, appHeight * 0.48);
         app.stage.addChild(model);
 
-        // Basic mouse tracking without touching Cubism's renderer internals.
         const onMove = (event: PointerEvent) => {
           const r = containerRef.current?.getBoundingClientRect();
           const core = modelRef.current?.internalModel?.coreModel;
@@ -142,7 +159,7 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
       }
     };
 
-    start();
+    void start();
 
     return () => {
       disposed = true;
