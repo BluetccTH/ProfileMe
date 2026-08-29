@@ -5,7 +5,7 @@ const file = path.resolve(__dirname, '../src/components/Live2DAvatar.tsx');
 let source = fs.readFileSync(file, 'utf8');
 
 // Preserve the legacy Live2D component as the source of truth.
-// Only migrate the adapter/runtime bootstrap and parameter timing to Cubism 5 + PixiJS 8.
+// Only migrate the Cubism adapter/runtime bootstrap and parameter timing.
 
 const requireMarker = (text, marker, label) => {
   if (!text.includes(marker)) {
@@ -26,14 +26,15 @@ source = source.replace(
   'const { Live2DModel } = await import("@naari3/pixi-live2d-display");'
 );
 
-// 2) Remove the legacy Pixi Loader middleware. The Cubism 5 package resolves
-// model3.json FileReferences, physics, motions, expressions and textures.
+// 2) Remove the legacy Pixi Loader middleware. The Cubism 5 adapter resolves
+// model3.json FileReferences, textures, motions, expressions and physics.
 source = source.replace(
   /\n\s*\/\/ Modern fetch-based loader middleware[\s\S]*?\n\s*if \(isDestroyedRef\.current \|\| !canvasRef\.current \|\| !containerRef\.current\) return;/,
   '\n\n        if (isDestroyedRef.current || !canvasRef.current || !containerRef.current) return;'
 );
 
 // 3) PixiJS 7 Application constructor -> PixiJS 8 async init.
+const appBefore = source;
 source = source.replace(
   /pixiApp\s*=\s*new PIXI\.Application\(\{[\s\S]*?\n\s*\}\);/m,
 `pixiApp = new PIXI.Application();
@@ -49,8 +50,12 @@ source = source.replace(
           powerPreference: "high-performance",
         });`
 );
+if (source === appBefore) {
+  throw new Error('[Live2D 5] Could not migrate the PixiJS Application initialization.');
+}
 
-// 4) Use Cubism 5 interaction options and the application's ticker.
+// 4) Cubism 5 options; keep model automatic updating enabled.
+const modelBefore = source;
 source = source.replace(
   /const model = await Live2DModel\.from\(modelUrl,\s*\{\s*autoInteract:\s*false,?\s*\}\);/m,
 `const model = await Live2DModel.from(modelUrl, {
@@ -60,14 +65,22 @@ source = source.replace(
           autoUpdate: true,
         });`
 );
+if (source === modelBefore) {
+  throw new Error('[Live2D 5] Could not migrate Live2DModel.from options.');
+}
 
-// 5) Bind the renderer explicitly for PixiJS 8.
-source = source.replace(
-  /modelRef\.current\s*=\s*model;/,
-  'model.setRenderer(pixiApp.renderer);\n        modelRef.current = model;'
-);
+// 5) Explicit renderer binding for PixiJS 8.
+if (!source.includes('model.setRenderer(pixiApp.renderer);')) {
+  source = source.replace(
+    /modelRef\.current\s*=\s*model;/,
+    'model.setRenderer(pixiApp.renderer);\n        modelRef.current = model;'
+  );
+}
+if (!source.includes('model.setRenderer(pixiApp.renderer);')) {
+  throw new Error('[Live2D 5] Could not attach PixiJS 8 renderer to Live2D model.');
+}
 
-// 6) Ensure the Pixi ticker is running.
+// 6) Ensure the application ticker is running.
 if (!source.includes('pixiApp.ticker.start();')) {
   source = source.replace(
     /appRef\.current\s*=\s*pixiApp;/,
@@ -75,10 +88,10 @@ if (!source.includes('pixiApp.ticker.start();')) {
   );
 }
 
-// 7) IMPORTANT: the legacy requestAnimationFrame loop races the Cubism
-// motion/physics pass on the modern adapter. Keep its existing parameter logic
-// unchanged, but invoke it from beforeModelUpdate so it runs immediately before
-// the core model is finalized for rendering. Do not run a second RAF loop.
+// 7) IMPORTANT: preserve the legacy parameter logic exactly, but stop its
+// requestAnimationFrame recursion. Instead, run the same function from
+// InternalModel.beforeModelUpdate, which is emitted after motion/physics and
+// immediately before the model parameters are finalized for rendering.
 if (!source.includes('legacyBeforeModelUpdateHandler')) {
   const pattern = /        const updateModelParams = \(\) => \{[\s\S]*?\n        \};\n\n        animFrameId = requestAnimationFrame\(updateModelParams\);/m;
   const match = source.match(pattern);
@@ -88,30 +101,23 @@ if (!source.includes('legacyBeforeModelUpdateHandler')) {
 
   const matched = match[0];
   const withoutRaf = matched.replace(/\n\s*animFrameId = requestAnimationFrame\(updateModelParams\);\s*$/m, '');
-
   const replacement = `${withoutRaf}
 
         const legacyBeforeModelUpdateHandler = () => updateModelParams();
         const internalModelForHook = modelRef.current?.internalModel;
-        if (internalModelForHook?.on) {
-          internalModelForHook.on("beforeModelUpdate", legacyBeforeModelUpdateHandler);
-        } else {
+        if (!internalModelForHook?.on) {
           throw new Error("[Live2D 5] InternalModel beforeModelUpdate event is unavailable.");
-        }`;
+        }
+        internalModelForHook.on("beforeModelUpdate", legacyBeforeModelUpdateHandler);`;
 
   source = source.replace(pattern, replacement);
 }
 
-// 8) Cleanup the event listener when the component is destroyed.
-const cleanupMarker = `isDestroyedRef.current = true;`;
-if (!source.includes('internalModelForHook.off("beforeModelUpdate", legacyBeforeModelUpdateHandler);')) {
-  source = source.replace(
-    cleanupMarker,
-    `${cleanupMarker}\n      try {\n        const cleanupInternalModel = modelRef.current?.internalModel;\n        if (cleanupInternalModel?.off && typeof legacyBeforeModelUpdateHandler === "function") {\n          cleanupInternalModel.off("beforeModelUpdate", legacyBeforeModelUpdateHandler);\n        }\n      } catch (e) {}`
-  );
+if (!source.includes('legacyBeforeModelUpdateHandler')) {
+  throw new Error('[Live2D 5] beforeModelUpdate hook was not installed.');
 }
 
-// 9) Hard guards: no legacy adapter/middleware and no silent removal of legacy UX.
+// 8) No legacy adapter or custom legacy loader may reach Rollup.
 if (/pixi-live2d-display\/cubism4/.test(source)) {
   throw new Error('[Live2D 5] Legacy Cubism 4 adapter remains after migration.');
 }
@@ -121,9 +127,6 @@ if (/Live2DLoader\s*\.\s*middlewares/.test(source)) {
 if (!/@naari3\/pixi-live2d-display/.test(source)) {
   throw new Error('[Live2D 5] Cubism 5 adapter import is missing.');
 }
-if (!source.includes('legacyBeforeModelUpdateHandler')) {
-  throw new Error('[Live2D 5] Legacy parameter timing hook was not installed.');
-}
 
 fs.writeFileSync(file, source, 'utf8');
-console.log('[Live2D 5] Legacy UI/interactions preserved; custom parameter updates now run on beforeModelUpdate.');
+console.log('[Live2D 5] Restored legacy UI/interactions; migrated only runtime bootstrap and moved legacy parameter updates to beforeModelUpdate.');
