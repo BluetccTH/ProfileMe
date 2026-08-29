@@ -33,7 +33,7 @@ source = source.replace(
   '\n\n        if (isDestroyedRef.current || !canvasRef.current || !containerRef.current) return;'
 );
 
-// 3) PixiJS 7 Application constructor -> PixiJS 8 async init.
+// 3) PixiJS 7 Application constructor -> PixiJS 8 async initialization.
 const appBefore = source;
 source = source.replace(
   /pixiApp\s*=\s*new PIXI\.Application\(\{[\s\S]*?\n\s*\}\);/m,
@@ -54,14 +54,14 @@ if (source === appBefore) {
   throw new Error('[Live2D 5] Could not migrate the PixiJS Application initialization.');
 }
 
-// 4) Cubism 5 options; keep model automatic updating enabled.
+// 4) Cubism 5 options. Use the shared ticker path expected by the adapter.
 const modelBefore = source;
 source = source.replace(
   /const model = await Live2DModel\.from\(modelUrl,\s*\{\s*autoInteract:\s*false,?\s*\}\);/m,
 `const model = await Live2DModel.from(modelUrl, {
           autoHitTest: false,
           autoFocus: false,
-          ticker: pixiApp.ticker,
+          ticker: PIXI.Ticker.shared,
           autoUpdate: true,
         });`
 );
@@ -80,18 +80,15 @@ if (!source.includes('model.setRenderer(pixiApp.renderer);')) {
   throw new Error('[Live2D 5] Could not attach PixiJS 8 renderer to Live2D model.');
 }
 
-// 6) Ensure the application ticker is running.
-if (!source.includes('pixiApp.ticker.start();')) {
-  source = source.replace(
-    /appRef\.current\s*=\s*pixiApp;/,
-    'appRef.current = pixiApp;\n        pixiApp.ticker.start();'
-  );
+// 6) The shared ticker path is started by PIXI. Do not create a second
+// model-specific ticker path that can desynchronize legacy behavior.
+if (!source.includes('appRef.current = pixiApp;')) {
+  throw new Error('[Live2D 5] PixiJS application reference was lost.');
 }
 
 // 7) IMPORTANT: preserve the legacy parameter logic exactly, but stop its
-// requestAnimationFrame recursion. Instead, run the same function from
-// InternalModel.beforeModelUpdate, which is emitted after motion/physics and
-// immediately before the model parameters are finalized for rendering.
+// requestAnimationFrame recursion. Run the same function from the model's
+// beforeModelUpdate lifecycle event, immediately before Core model.update().
 if (!source.includes('legacyBeforeModelUpdateHandler')) {
   const pattern = /        const updateModelParams = \(\) => \{[\s\S]*?\n        \};\n\n        animFrameId = requestAnimationFrame\(updateModelParams\);/m;
   const match = source.match(pattern);
@@ -129,4 +126,4 @@ if (!/@naari3\/pixi-live2d-display/.test(source)) {
 }
 
 fs.writeFileSync(file, source, 'utf8');
-console.log('[Live2D 5] Restored legacy UI/interactions; migrated only runtime bootstrap and moved legacy parameter updates to beforeModelUpdate.');
+console.log('[Live2D 5] Legacy UI/interactions preserved; Cubism 5 runtime uses the shared Pixi ticker.');
