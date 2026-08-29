@@ -163,9 +163,20 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
               : context.url;
             const targetUrl = resolveAssetUrl(rawUrl);
 
+            // Handle optional pose files or missing pose files gracefully
+            if (!context.url || context.url === "Pose" || context.url === "pose") {
+              context.result = null;
+              return;
+            }
+
             try {
               const res = await fetch(targetUrl);
               if (!res.ok) {
+                // If optional pose or auxiliary file is not found, don't crash
+                if (targetUrl.toLowerCase().includes("pose")) {
+                  context.result = null;
+                  return;
+                }
                 throw new Error(`Failed to load ${targetUrl} (Status ${res.status})`);
               }
               if (context.type === "json") {
@@ -188,6 +199,10 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
                 context.result = await res.text();
               }
             } catch (fetchErr: any) {
+              if (targetUrl.toLowerCase().includes("pose")) {
+                context.result = null;
+                return;
+              }
               console.error("[Live2D Loader] Error fetching resource:", targetUrl, fetchErr);
               throw fetchErr;
             }
