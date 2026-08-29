@@ -43,10 +43,8 @@ jobs:
         run: |
           echo "=== Live2DAvatar.tsx ==="
           grep -n "Live2DAvatar" src/components/Live2DAvatar.tsx || true
-
           echo "=== App import ==="
           grep -n "Live2DAvatar" src/App.tsx || true
-
       - name: Build
         run: npm run build
 
@@ -60,13 +58,11 @@ jobs:
             -o -name "*.png" \
             -o -name "*.physics3.json" \
           \) | sort
-
           echo "=== File sizes ==="
           find dist -type f \( \
             -name "*.moc3" \
             -o -name "*.png" \
           \) -exec ls -lh {} \;
-
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
