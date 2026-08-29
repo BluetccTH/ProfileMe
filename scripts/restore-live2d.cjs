@@ -1,36 +1,29 @@
 const fs = require('fs');
 const path = require('path');
 
-const EXPECTED_MOC3_SIZE = 2628790;
-const EXPECTED_TEXTURE_SIZE = 3603048;
-const PNG_HEADER = Buffer.from([0x89, 0x50, 0x4e, 0x0d, 0x0a, 0x1a, 0x0a]);
+const PNG_HEADER = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
 function isValidMoc(file) {
   if (!fs.existsSync(file)) return false;
   const stat = fs.statSync(file);
-  if (stat.size !== EXPECTED_MOC3_SIZE) return false;
-  const header = fs.readFileSync(file).subarray(0, 4).toString('ascii');
-  return header === 'MOC3';
+  if (stat.size < 64) return false;
+  return fs.readFileSync(file).subarray(0, 4).toString('ascii') === 'MOC3';
 }
 
 function isValidTexture(file) {
   if (!fs.existsSync(file)) return false;
-  const stat = fs.statSync(file);
-  if (stat.size !== EXPECTED_TEXTURE_SIZE) return false;
-  const header = fs.readFileSync(file).subarray(0, 8);
-  const expected = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-  return header.equals(expected);
+  const data = fs.readFileSync(file);
+  return data.length >= 8 && data.subarray(0, 8).equals(PNG_HEADER);
 }
 
 function restoreAssets() {
   const publicMoc = path.resolve(__dirname, '../public/live2d/MassageSeacubus_rei.moc3');
   const publicTex = path.resolve(__dirname, '../public/live2d/MassageSeacubus_rei.4096/texture_00.png');
 
-  // Keep the known-good Live2D binary pair already tracked in public/live2d.
-  // Do not replace it with the newer source-folder pair, which is a different
-  // binary/texture combination and fails Cubism Core validation at runtime.
+  // Never replace a valid tracked binary merely because its byte length differs
+  // from an older build. The legacy model's original MOC is 1,751,104 bytes.
   if (isValidMoc(publicMoc) && isValidTexture(publicTex)) {
-    console.log(`[Live2D Auto-Restore] Keeping known-good assets: moc3=${EXPECTED_MOC3_SIZE} bytes, texture=${EXPECTED_TEXTURE_SIZE} bytes.`);
+    console.log('[Live2D Auto-Restore] Keeping valid tracked Live2D binary pair.');
     return;
   }
 
@@ -42,7 +35,7 @@ function restoreAssets() {
 
   let mocBin;
   let texBin;
-  let source = 'Base64 fallback';
+  let source = 'base64 fallback';
 
   if (fs.existsSync(sourceMoc) && fs.existsSync(sourceTex)) {
     mocBin = fs.readFileSync(sourceMoc);
@@ -56,20 +49,26 @@ function restoreAssets() {
     return;
   }
 
-  if (mocBin.length < 64 || mocBin.subarray(0, 4).toString('ascii') !== 'MOC3') {
-    throw new Error(`[Live2D Auto-Restore] Invalid MOC3 source asset (size=${mocBin.length}, header=${JSON.stringify(mocBin.subarray(0, 4).toString('ascii'))}).`);
+  if (!isValidMocBuffer(mocBin)) {
+    throw new Error(`[Live2D Auto-Restore] Invalid MOC3 source asset (size=${mocBin.length}).`);
   }
-  const expectedPng = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-  if (texBin.length < 8 || !texBin.subarray(0, 8).equals(expectedPng)) {
+  if (!isValidPngBuffer(texBin)) {
     throw new Error(`[Live2D Auto-Restore] Invalid PNG source asset (size=${texBin.length}).`);
   }
-
-  console.log(`[Live2D Auto-Restore] Restoring assets from ${source}: moc3=${mocBin.length}, texture=${texBin.length}.`);
 
   fs.mkdirSync(path.dirname(publicMoc), { recursive: true });
   fs.mkdirSync(path.dirname(publicTex), { recursive: true });
   fs.writeFileSync(publicMoc, mocBin);
   fs.writeFileSync(publicTex, texBin);
+  console.log(`[Live2D Auto-Restore] Restored ${source}: moc3=${mocBin.length}, texture=${texBin.length}.`);
+}
+
+function isValidMocBuffer(buffer) {
+  return buffer.length >= 64 && buffer.subarray(0, 4).toString('ascii') === 'MOC3';
+}
+
+function isValidPngBuffer(buffer) {
+  return buffer.length >= 8 && buffer.subarray(0, 8).equals(PNG_HEADER);
 }
 
 restoreAssets();
