@@ -1,11 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Eye,
-  Info,
-  RefreshCw,
-  Smile,
-  Sparkles,
-} from "lucide-react";
+import { Eye, Info, RefreshCw, Smile, Sparkles } from "lucide-react";
 
 const resolveAssetUrl = (assetPath: string): string => {
   const base = (import.meta as any).env?.BASE_URL || "/";
@@ -44,6 +38,7 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
   const appRef = useRef<any>(null);
   const modelRef = useRef<any>(null);
   const destroyedRef = useRef(false);
+  const trackingModeRef = useRef<"mouse" | "auto" | "locked">("mouse");
   const targetRef = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
 
   const [loading, setLoading] = useState(true);
@@ -54,14 +49,49 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
   const [clickCount, setClickCount] = useState(0);
 
   useEffect(() => {
+    trackingModeRef.current = trackingMode;
+  }, [trackingMode]);
+
+  useEffect(() => {
     destroyedRef.current = false;
     let frame = 0;
+    let clickTimeout: ReturnType<typeof setTimeout> | null = null;
+    let app: any = null;
+    let model: any = null;
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (trackingModeRef.current === "locked" || !containerRef.current) return;
+      const r = containerRef.current.getBoundingClientRect();
+      const centerX = r.left + r.width / 2;
+      const centerY = r.top + r.height * 0.38;
+      targetRef.current.tx = Math.max(-1, Math.min(1, (event.clientX - centerX) / Math.max(r.width * 0.75, 1)));
+      targetRef.current.ty = Math.max(-1, Math.min(1, (event.clientY - centerY) / Math.max(r.height * 0.75, 1)));
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      if (touch) onPointerMove(new PointerEvent("pointermove", { clientX: touch.clientX, clientY: touch.clientY }));
+    };
+
+    const onModelClick = () => {
+      setClickCount((n) => n + 1);
+      const core = modelRef.current?.internalModel?.coreModel;
+      if (!core) return;
+      const safeSet = (id: string, value: number) => {
+        try { core.setParameterValueById(id, value); } catch (_) {}
+      };
+      safeSet("ParamCheek", 1);
+      safeSet("ParamMouthForm", 1);
+      safeSet("ParamEyeLSmile", 1);
+      safeSet("ParamEyeRSmile", 1);
+      if (clickTimeout) clearTimeout(clickTimeout);
+      clickTimeout = setTimeout(() => safeSet("ParamCheek", 0), 1400);
+    };
 
     const start = async () => {
       try {
         setLoading(true);
         setError(null);
-
         if (!canvasRef.current || !containerRef.current) return;
 
         const PIXI = await import("pixi.js");
@@ -74,6 +104,7 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
           await new Promise<void>((resolve, reject) => {
             const existing = document.querySelector("script[src*='live2dcubismcore']") as HTMLScriptElement | null;
             if (existing) {
+              if ((window as any).Live2DCubismCore) { resolve(); return; }
               existing.addEventListener("load", () => resolve(), { once: true });
               existing.addEventListener("error", () => reject(new Error("Cubism Core failed to load")), { once: true });
               return;
@@ -85,16 +116,13 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
             document.head.appendChild(script);
           });
         }
-
-        if (!(window as any).Live2DCubismCore) {
-          throw new Error("Cubism 5 Core is unavailable");
-        }
+        if (!(window as any).Live2DCubismCore) throw new Error("Cubism 5 Core is unavailable");
 
         const rect = containerRef.current.getBoundingClientRect();
         const appWidth = Math.max(1, rect.width || width);
         const appHeight = Math.max(1, rect.height || height);
 
-        const app = new PIXI.Application();
+        app = new PIXI.Application();
         await app.init({
           canvas: canvasRef.current,
           width: appWidth,
@@ -108,17 +136,13 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
           powerPreference: "high-performance",
         } as any);
 
-        if (destroyedRef.current) {
-          app.destroy(true);
-          return;
-        }
-
+        if (destroyedRef.current) { app.destroy(true); return; }
         appRef.current = app;
 
-        const modelUrl = `${resolveAssetUrl("live2d/MassageSeacubus_rei.model3.json")}?v=20260829-final`;
+        const modelUrl = `${resolveAssetUrl("live2d/MassageSeacubus_rei.model3.json")}?v=20260829-final2`;
         console.info("[Live2D] Cubism 5 model URL:", modelUrl);
 
-        const model = await Live2DModel.from(modelUrl, {
+        model = await Live2DModel.from(modelUrl, {
           ticker: PIXI.Ticker.shared,
           autoHitTest: false,
           autoFocus: false,
@@ -145,28 +169,21 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
         model.anchor.set(0.5, 0.22);
         model.position.set(appWidth / 2, appHeight * 0.48);
         app.stage.addChild(model);
+        app.ticker.start();
         app.renderer.render(app.stage);
-
-        let lastBlink = performance.now();
-        let nextBlink = 3000 + Math.random() * 2500;
-        let blinking = false;
-        let clickTimeout: ReturnType<typeof setTimeout> | null = null;
 
         const tick = () => {
           if (destroyedRef.current || !modelRef.current) return;
           const now = performance.now();
-          const core = modelRef.current.internalModel?.coreModel;
-
           targetRef.current.x += (targetRef.current.tx - targetRef.current.x) * 0.08;
           targetRef.current.y += (targetRef.current.ty - targetRef.current.y) * 0.08;
-
+          const core = modelRef.current.internalModel?.coreModel;
           if (core) {
             const x = targetRef.current.x;
             const y = targetRef.current.y;
             const safeSet = (id: string, value: number) => {
               try { core.setParameterValueById(id, value); } catch (_) {}
             };
-
             safeSet("ParamAngleX", x * 28);
             safeSet("ParamAngleY", -y * 24);
             safeSet("ParamAngleZ", x * y * -15);
@@ -176,63 +193,20 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
             safeSet("ParamBreath", (Math.sin(now * 0.002) + 1) * 0.5);
             safeSet("ParamBreath2", (Math.cos(now * 0.0025) + 1) * 0.5);
 
-            if (!blinking && now - lastBlink > nextBlink) {
-              blinking = true;
-              lastBlink = now;
-            }
-            if (blinking) {
-              const elapsed = now - lastBlink;
-              if (elapsed < 150) {
-                const p = elapsed / 150;
-                const eye = p < 0.5 ? 1 - p * 2 : (p - 0.5) * 2;
-                safeSet("ParamEyeLOpen", eye);
-                safeSet("ParamEyeROpen", eye);
-              } else {
-                blinking = false;
-                lastBlink = now;
-                nextBlink = 2600 + Math.random() * 3800;
-                safeSet("ParamEyeLOpen", 1);
-                safeSet("ParamEyeROpen", 1);
-              }
+            if (trackingModeRef.current !== "locked") {
+              // Keep manual interaction values alive after the runtime update.
+              safeSet("ParamAngleX", x * 28);
+              safeSet("ParamAngleY", -y * 24);
             }
           }
-
           frame = requestAnimationFrame(tick);
         };
 
-        const onPointer = (clientX: number, clientY: number) => {
-          if (trackingMode === "locked" || !containerRef.current) return;
-          const r = containerRef.current.getBoundingClientRect();
-          targetRef.current.tx = Math.max(-1, Math.min(1, ((clientX - (r.left + r.width / 2)) / Math.max(r.width * 0.75, 1))));
-          targetRef.current.ty = Math.max(-1, Math.min(1, ((clientY - (r.top + r.height * 0.38)) / Math.max(r.height * 0.75, 1))));
-        };
-
-        const onModelClick = () => {
-          setClickCount((n) => n + 1);
-          const core = modelRef.current?.internalModel?.coreModel;
-          if (!core) return;
-          try {
-            core.setParameterValueById("ParamCheek", 1);
-            core.setParameterValueById("ParamMouthForm", 1);
-            core.setParameterValueById("ParamEyeLSmile", 1);
-            core.setParameterValueById("ParamEyeRSmile", 1);
-          } catch (_) {}
-          if (clickTimeout) clearTimeout(clickTimeout);
-          clickTimeout = setTimeout(() => {
-            const c = modelRef.current?.internalModel?.coreModel;
-            if (!c) return;
-            try { c.setParameterValueById("ParamCheek", 0); } catch (_) {}
-          }, 1400);
-        };
-
-        model.on("pointertap", onModelClick);
-        window.addEventListener("pointermove", (e) => onPointer(e.clientX, e.clientY), { passive: true });
-        window.addEventListener("touchmove", (e) => {
-          const t = e.touches[0];
-          if (t) onPointer(t.clientX, t.clientY);
-        }, { passive: true });
-
+        window.addEventListener("pointermove", onPointerMove, { passive: true });
+        window.addEventListener("touchmove", onTouchMove, { passive: true });
+        containerRef.current.addEventListener("click", onModelClick);
         frame = requestAnimationFrame(tick);
+
         setLoading(false);
         console.info("[Live2D] model created", { width: mw, height: mh, scale });
         onLoaded?.();
@@ -248,16 +222,21 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
     return () => {
       destroyedRef.current = true;
       cancelAnimationFrame(frame);
-      try { modelRef.current?.destroy({ children: true }); } catch (_) {}
-      try { appRef.current?.destroy(true, { children: true }); } catch (_) {}
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("touchmove", onTouchMove);
+      if (containerRef.current) containerRef.current.removeEventListener("click", onModelClick);
+      if (clickTimeout) clearTimeout(clickTimeout);
+      try { model?.destroy({ children: true }); } catch (_) {}
+      try { app?.destroy(true, { children: true }); } catch (_) {}
       modelRef.current = null;
       appRef.current = null;
     };
-  }, [width, height, interactive, onLoaded, trackingMode]);
+  }, [width, height, interactive, onLoaded]);
 
   useEffect(() => {
     if (trackingMode !== "auto") return;
     const timer = setInterval(() => {
+      if (trackingModeRef.current !== "auto") return;
       targetRef.current.tx = (Math.random() - 0.5) * 1.1;
       targetRef.current.ty = (Math.random() - 0.5) * 0.75;
     }, 2200);
@@ -316,15 +295,9 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
           <span className="text-slate-400 font-sans truncate">{trackingMode === "mouse" ? "👀 ตามเมาส์เรียลไทม์" : trackingMode === "auto" ? "🌀 สุ่มมองอัตโนมัติ" : "🔒 ล็อกทิศทาง"}</span>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          <button type="button" title="สลับโหมดการมอง" onClick={() => setTrackingMode((m) => m === "mouse" ? "auto" : m === "auto" ? "locked" : "mouse")} className="p-1.5 rounded-md bg-white/5 hover:bg-white/10 text-slate-300">
-            <Eye className="w-3 h-3" />
-          </button>
-          <button type="button" title="Expressions" onClick={() => setShowControls((v) => !v)} className="p-1.5 rounded-md bg-white/5 hover:bg-white/10 text-slate-300">
-            <Smile className="w-3.5 h-3.5" />
-          </button>
-          <button type="button" title="Reset" onClick={resetPose} className="p-1.5 rounded-md bg-white/5 hover:bg-white/10 text-slate-300">
-            <RefreshCw className="w-3 h-3" />
-          </button>
+          <button type="button" title="สลับโหมดการมอง" onClick={(e) => { e.stopPropagation(); setTrackingMode((m) => m === "mouse" ? "auto" : m === "auto" ? "locked" : "mouse"); }} className="p-1.5 rounded-md bg-white/5 hover:bg-white/10 text-slate-300"><Eye className="w-3 h-3" /></button>
+          <button type="button" title="Expressions" onClick={(e) => { e.stopPropagation(); setShowControls((v) => !v); }} className="p-1.5 rounded-md bg-white/5 hover:bg-white/10 text-slate-300"><Smile className="w-3.5 h-3.5" /></button>
+          <button type="button" title="Reset" onClick={(e) => { e.stopPropagation(); resetPose(); }} className="p-1.5 rounded-md bg-white/5 hover:bg-white/10 text-slate-300"><RefreshCw className="w-3 h-3" /></button>
         </div>
       </div>
 
@@ -352,18 +325,11 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
 
       {showControls && (
         <div onClick={(e) => e.stopPropagation()} className="absolute bottom-14 inset-x-3 bg-slate-950/90 border border-purple-500/30 backdrop-blur-xl rounded-2xl p-3 shadow-2xl z-30">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-mono text-purple-400 font-semibold flex items-center gap-1.5"><Smile className="w-3.5 h-3.5" /> แสดงอารมณ์</span>
-            <span className="text-[10px] text-slate-500">เลือกอารมณ์ของ Lily</span>
-          </div>
+          <div className="flex items-center justify-between mb-2"><span className="text-[11px] font-mono text-purple-400 font-semibold flex items-center gap-1.5"><Smile className="w-3.5 h-3.5" /> แสดงอารมณ์</span><span className="text-[10px] text-slate-500">เลือกอารมณ์ของ Lily</span></div>
           <div className="grid grid-cols-4 gap-1.5">
             {EXPRESSIONS.map((exp) => {
               const active = currentExpression === exp.id;
-              return (
-                <button key={exp.id} type="button" onClick={() => applyExpression(exp.id)} className={`px-2 py-1.5 rounded-lg text-[10px] font-medium flex items-center justify-center gap-1 transition-all ${active ? "bg-purple-600 text-white scale-105" : "bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5"}`}>
-                  <span>{exp.emoji}</span><span className="truncate">{exp.name}</span>
-                </button>
-              );
+              return <button key={exp.id} type="button" onClick={() => applyExpression(exp.id)} className={`px-2 py-1.5 rounded-lg text-[10px] font-medium flex items-center justify-center gap-1 transition-all ${active ? "bg-purple-600 text-white scale-105" : "bg-white/5 hover:bg-white/10 text-slate-300 border border-white/5"}`}><span>{exp.emoji}</span><span className="truncate">{exp.name}</span></button>;
             })}
           </div>
         </div>
