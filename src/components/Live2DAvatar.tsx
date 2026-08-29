@@ -57,7 +57,7 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
         }
 
         const PIXI = await import("pixi.js");
-        const { Live2DModel, Live2DLoader } = await import("@naari3/pixi-live2d-display");
+        const { Live2DModel } = await import("@naari3/pixi-live2d-display");
 
         if (!(window as any).Live2DCubismCore) {
           throw new Error("Cubism 5 Core is not available");
@@ -65,12 +65,6 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
         if (!canvasRef.current || !containerRef.current || disposed) return;
 
         (window as any).PIXI = PIXI;
-
-        // PixiJS 8 requires the ticker plugin when importing Application pieces on demand.
-        try {
-          (PIXI.Application as any).registerPlugin?.((PIXI as any).TickerPlugin);
-        } catch (_) {}
-        Live2DModel.registerTicker(PIXI.Ticker);
 
         const rect = containerRef.current.getBoundingClientRect();
         const appWidth = Math.max(1, rect.width || width);
@@ -83,9 +77,12 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
           height: appHeight,
           backgroundAlpha: 0,
           antialias: true,
+          autoDensity: true,
           resolution: Math.min(window.devicePixelRatio || 1, 2),
           preference: "webgl",
           preferWebGLVersion: 2,
+          powerPreference: "high-performance",
+          premultipliedAlpha: false,
           autoStart: true,
         } as any);
 
@@ -94,40 +91,19 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
           return;
         }
         appRef.current = app;
-        app.ticker.start();
-        (app.renderer as any).render?.(app.stage);
 
-        // Keep relative resources inside the model's own directory.
-        Live2DLoader.middlewares = [
-          async (context: any, next: any) => {
-            const rawUrl = context.settings?.resolveURL
-              ? context.settings.resolveURL(context.url)
-              : context.url;
-            const targetUrl = resolveAssetUrl(rawUrl);
-            const response = await fetch(targetUrl, { cache: "no-store" });
-            if (!response.ok) {
-              throw new Error(`Failed to load ${targetUrl} (HTTP ${response.status})`);
-            }
-            if (context.type === "json") {
-              context.result = await response.json();
-            } else if (context.type === "arraybuffer") {
-              context.result = await response.arrayBuffer();
-            } else {
-              context.result = await response.text();
-            }
-            return next?.();
-          },
-        ];
+        // Follow the PixiJS 8 + Cubism 5 example from naari3:
+        // use the shared ticker and explicitly bind the Live2D renderer.
+        Live2DModel.registerTicker(PIXI.Ticker);
 
         const modelUrl = `${resolveAssetUrl("live2d/MassageSeacubus_rei.model3.json")}?v=20260829`;
         console.info("[Live2D] Cubism 5 model URL:", modelUrl);
 
         const model = await Live2DModel.from(modelUrl, {
-          autoInteract: false,
           autoHitTest: false,
           autoFocus: false,
           autoUpdate: true,
-          ticker: app.ticker,
+          ticker: PIXI.Ticker.shared,
         } as any);
 
         if (disposed) {
@@ -136,29 +112,33 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
           return;
         }
 
-        modelRef.current = model;
-
-        // Make sure the display object is visible and has a valid transform.
+        // Critical for PixiJS 8: attach the model to the application's renderer.
+        model.setRenderer(app.renderer);
         model.visible = true;
         model.alpha = 1;
-        model.pivot.set(0, 0);
+
+        modelRef.current = model;
 
         const modelWidth = Number(model.width) || 1;
         const modelHeight = Number(model.height) || 1;
-        const scale = Math.min(appWidth / modelWidth, appHeight / modelHeight) * 2.9;
+        const scale = Math.min(appWidth / modelWidth, appHeight / modelHeight) * 0.8;
+
         model.scale.set(scale);
-        model.anchor.set(0.5, 0.2);
-        model.position.set(appWidth / 2, appHeight * 0.48);
+        model.anchor.set(0.5, 0.5);
+        model.position.set(appWidth / 2, appHeight / 2);
         app.stage.addChild(model);
 
-        // Force an initial frame, then let Pixi's ticker handle continuous redraws.
-        (app.renderer as any).render?.(app.stage);
+        // Ensure the ticker is actually running and render a first frame.
+        app.ticker.start();
+        (PIXI.Ticker.shared as any).start?.();
+        app.render();
 
         console.info("[Live2D] model created", {
           width: modelWidth,
           height: modelHeight,
           scale,
           stageChildren: app.stage.children.length,
+          renderer: app.renderer.type,
         });
 
         setLoading(false);
