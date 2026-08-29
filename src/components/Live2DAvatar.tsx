@@ -36,7 +36,6 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
         setLoading(true);
         setError(null);
 
-        // Cubism 5 requires a Cubism 5 Core. Load the local runtime first.
         if (!(window as any).Live2DCubismCore) {
           await new Promise<void>((resolve, reject) => {
             const existing = document.querySelector("script[src*='live2dcubismcore']") as HTMLScriptElement | null;
@@ -90,29 +89,13 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
         }
         appRef.current = app;
 
-        // Fetch and normalize the model settings before handing them to the
-        // Cubism 5 adapter. Some model3.json files omit HitAreas entirely;
-        // the adapter expects an array and calls .map() during initialization.
+        // Let the Cubism 5 adapter parse model3.json itself. This preserves
+        // optional FileReferences such as Pose/Physics/Motions/Expressions
+        // exactly as the package expects and avoids reshaping its settings.
         const modelUrl = `${resolveAssetUrl("live2d/MassageSeacubus_rei.model3.json")}?v=20260829`;
-        const modelResponse = await fetch(modelUrl, { cache: "no-store" });
-        if (!modelResponse.ok) {
-          throw new Error(`model3.json HTTP ${modelResponse.status}`);
-        }
-        const settings = await modelResponse.json();
-        if (!settings || typeof settings !== "object") {
-          throw new Error("model3.json returned an invalid JSON object");
-        }
-        settings.HitAreas = Array.isArray(settings.HitAreas) ? settings.HitAreas : [];
-        settings.url = modelUrl;
-        console.info("[Live2D] Cubism 5 model settings normalized", {
-          url: modelUrl,
-          hitAreas: settings.HitAreas.length,
-          textures: Array.isArray(settings?.FileReferences?.Textures)
-            ? settings.FileReferences.Textures.length
-            : 0,
-        });
+        console.info("[Live2D] Cubism 5 model URL:", modelUrl);
 
-        const model = await Live2DModel.from(settings, {
+        const model = await Live2DModel.from(modelUrl, {
           autoHitTest: false,
           autoFocus: false,
           autoUpdate: true,
