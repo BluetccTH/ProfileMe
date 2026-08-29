@@ -57,7 +57,7 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
         }
 
         const PIXI = await import("pixi.js");
-        const { Live2DModel } = await import("@naari3/pixi-live2d-display");
+        const { Live2DModel, Live2DLoader } = await import("@naari3/pixi-live2d-display");
 
         if (!(window as any).Live2DCubismCore) {
           throw new Error("Cubism 5 Core is not available");
@@ -65,6 +65,11 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
         if (!canvasRef.current || !containerRef.current || disposed) return;
 
         (window as any).PIXI = PIXI;
+
+        // PixiJS 8 requires the ticker plugin when importing Application pieces on demand.
+        try {
+          (PIXI.Application as any).registerPlugin?.((PIXI as any).TickerPlugin);
+        } catch (_) {}
         Live2DModel.registerTicker(PIXI.Ticker);
 
         const rect = containerRef.current.getBoundingClientRect();
@@ -81,21 +86,44 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
           resolution: Math.min(window.devicePixelRatio || 1, 2),
           preference: "webgl",
           preferWebGLVersion: 2,
-        });
+          autoStart: true,
+        } as any);
 
         if (disposed) {
           app.destroy(true);
           return;
         }
         appRef.current = app;
+        app.ticker.start();
+        (app.renderer as any).render?.(app.stage);
 
-        // Let the Cubism 5 adapter parse model3.json itself. This preserves
-        // optional FileReferences such as Pose/Physics/Motions/Expressions
-        // exactly as the package expects and avoids reshaping its settings.
+        // Keep relative resources inside the model's own directory.
+        Live2DLoader.middlewares = [
+          async (context: any, next: any) => {
+            const rawUrl = context.settings?.resolveURL
+              ? context.settings.resolveURL(context.url)
+              : context.url;
+            const targetUrl = resolveAssetUrl(rawUrl);
+            const response = await fetch(targetUrl, { cache: "no-store" });
+            if (!response.ok) {
+              throw new Error(`Failed to load ${targetUrl} (HTTP ${response.status})`);
+            }
+            if (context.type === "json") {
+              context.result = await response.json();
+            } else if (context.type === "arraybuffer") {
+              context.result = await response.arrayBuffer();
+            } else {
+              context.result = await response.text();
+            }
+            return next?.();
+          },
+        ];
+
         const modelUrl = `${resolveAssetUrl("live2d/MassageSeacubus_rei.model3.json")}?v=20260829`;
         console.info("[Live2D] Cubism 5 model URL:", modelUrl);
 
         const model = await Live2DModel.from(modelUrl, {
+          autoInteract: false,
           autoHitTest: false,
           autoFocus: false,
           autoUpdate: true,
@@ -103,35 +131,35 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
         } as any);
 
         if (disposed) {
-          model.destroy();
-          app.destroy(true);
+          try { model.destroy({ children: true }); } catch (_) {}
+          try { app.destroy(true, { children: true }); } catch (_) {}
           return;
         }
+
         modelRef.current = model;
 
-        const scale = Math.min(appWidth / model.width, appHeight / model.height) * 3.1;
+        // Make sure the display object is visible and has a valid transform.
+        model.visible = true;
+        model.alpha = 1;
+        model.pivot.set(0, 0);
+
+        const modelWidth = Number(model.width) || 1;
+        const modelHeight = Number(model.height) || 1;
+        const scale = Math.min(appWidth / modelWidth, appHeight / modelHeight) * 2.9;
         model.scale.set(scale);
         model.anchor.set(0.5, 0.2);
         model.position.set(appWidth / 2, appHeight * 0.48);
         app.stage.addChild(model);
 
-        const onMove = (event: PointerEvent) => {
-          const r = containerRef.current?.getBoundingClientRect();
-          const core = modelRef.current?.internalModel?.coreModel;
-          if (!r || !core) return;
-          const x = Math.max(-1, Math.min(1, ((event.clientX - (r.left + r.width / 2)) / r.width) * 2));
-          const y = Math.max(-1, Math.min(1, ((event.clientY - (r.top + r.height * 0.4)) / r.height) * 2));
-          try {
-            core.setParameterValueById("ParamAngleX", x * 28);
-            core.setParameterValueById("ParamAngleY", -y * 24);
-            core.setParameterValueById("ParamAngleZ", x * y * -12);
-            core.setParameterValueById("ParamEyeBallX", x);
-            core.setParameterValueById("ParamEyeBallY", -y);
-          } catch (_) {}
-        };
+        // Force an initial frame, then let Pixi's ticker handle continuous redraws.
+        (app.renderer as any).render?.(app.stage);
 
-        containerRef.current.addEventListener("pointermove", onMove, { passive: true });
-        (containerRef.current as any).__live2dPointerMove = onMove;
+        console.info("[Live2D] model created", {
+          width: modelWidth,
+          height: modelHeight,
+          scale,
+          stageChildren: app.stage.children.length,
+        });
 
         setLoading(false);
         onLoaded?.();
@@ -146,11 +174,8 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
 
     return () => {
       disposed = true;
-      const container = containerRef.current;
-      const pointerMove = container && (container as any).__live2dPointerMove;
-      if (container && pointerMove) container.removeEventListener("pointermove", pointerMove);
-      try { modelRef.current?.destroy(); } catch (_) {}
-      try { appRef.current?.destroy(true); } catch (_) {}
+      try { modelRef.current?.destroy({ children: true }); } catch (_) {}
+      try { appRef.current?.destroy(true, { children: true }); } catch (_) {}
       modelRef.current = null;
       appRef.current = null;
     };
