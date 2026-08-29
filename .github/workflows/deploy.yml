@@ -36,20 +36,16 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           package-manager-cache: false
 
-      # Recreate package-lock.json from package.json so npm ci never uses
-      # the stale Pixi 7 lock entries from an older revision.
       - name: Generate package lock
         run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
 
       - name: Install dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
 
-      - name: Check Live2DAvatar export
+      - name: Check legacy Live2D base
         run: |
-          echo "=== Live2DAvatar.tsx ==="
-          grep -n "Live2DAvatar" src/components/Live2DAvatar.tsx || true
-          echo "=== App import ==="
-          grep -n "Live2DAvatar" src/App.tsx || true
+          echo "=== Live2DAvatar legacy base ==="
+          grep -n "Live2DLoader\|pixi-live2d-display/cubism4\|autoInteract\|ParamAngleX\|ParamBiaoQ1" src/components/Live2DAvatar.tsx || true
 
       - name: Build
         run: npm run build
@@ -63,7 +59,7 @@ jobs:
             -o -name "*.png" \
             -o -name "*.physics3.json" \
           \) | sort
-          echo "=== File sizes ==="
+          echo "=== MOC/texture sizes ==="
           find dist -type f \( \
             -name "*.moc3" \
             -o -name "*.png" \
