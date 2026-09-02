@@ -148,7 +148,7 @@ export default function App() {
       name: "Lily - AI",
       description: "An interactive celestial Live2D AI Anime companion featuring real-time eye and cursor tracking, high-fidelity voice synthesis, conversational intelligence powered by Google Gemini, emotional facial expressions, and responsive physics.",
       imageUrl: "Lily - AI.jpg",
-      githubUrl: "https://bluetccth.github.io/Lily---AI-Anime-Companion/",
+      githubUrl: "https://github.com/BluetccTH/Lily---AI-Anime-Companion",
       tags: ["AI", "CHAT BOT", "API", "LIVE2D SYNC"],
     },
     {
@@ -713,212 +713,202 @@ export default function App() {
         </div>
       </section>
 
-      {/* ════════════════════════════════════
-          SECTION 2: ABOUT
-      ════════════════════════════════════ */}
-      <section id="about" className="py-24 relative z-10">
-        <div className="max-w-7xl mx-auto px-5 md:px-8">
-          
-          {/* Header Section */}
-          <div className="text-center mb-16">
-            <span className="inline-block mb-3 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-widest bg-blue-500/10 border border-blue-500/20 text-blue-400">
-              About me
-            </span>
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-              เกี่ยวกับฉัน
-            </h2>
-          </div>
+{/* ════════════════════════════════════
+    SECTION 4: PORTFOLIO (PRODUCTS)
+════════════════════════════════════ */}
+<section id="portfolio" className="py-24 relative z-10">
+  <div className="max-w-7xl mx-auto px-5 md:px-8">
 
-          {/* Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* Overview - Full Width Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="md:col-span-2 p-6 md:p-8 bg-white/5 backdrop-blur-2xl border border-white/10 hover:border-white/20 rounded-3xl relative overflow-hidden transition-all duration-300 group shadow-xl"
-            >
-              {/* Card visual accent border */}
-              <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
-              
-              <div className="flex items-center gap-2.5 mb-4 text-blue-400 font-bold text-sm uppercase tracking-widest">
-                <User className="w-5 h-5 text-blue-400" />
-                <span>Overview • ข้อมูลทั่วไป</span>
-              </div>
-              <p className="text-sm md:text-base text-slate-300 leading-relaxed">
-                ผมเป็นนักพัฒนาซอฟต์แวร์ที่มุ่งเน้นด้าน <strong className="text-white font-semibold">Windows Optimization, Automation, AI</strong> และ <strong className="text-white font-semibold">Performance Engineering</strong> มีประสบการณ์ในการพัฒนาเครื่องมือสำหรับเพิ่มประสิทธิภาพของระบบปฏิบัติการ ปรับแต่ง Windows ให้ตอบสนองรวดเร็วขึ้น ลดภาระของระบบ และช่วยยกระดับประสบการณ์การเล่นเกมให้ลื่นไหลมากขึ้น รวมถึงการพัฒนา <strong className="text-white font-semibold">Automation Tools</strong> และ <strong className="text-white font-semibold">Utility Software</strong> โดยให้ความสำคัญกับ <strong className="text-white font-semibold">Performance, Clean Design</strong> และ <strong className="text-white font-semibold">Real-world Usability</strong>
-              </p>
-            </motion.div>
+    {/* Header Section */}
+    <div className="text-center mb-16">
+      <span className="inline-block mb-3 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-widest bg-blue-500/10 border border-blue-500/20 text-blue-400">
+        My Products
+      </span>
 
-            {/* Expertise Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="p-6 md:p-8 bg-white/5 backdrop-blur-2xl border border-white/10 hover:border-white/20 rounded-3xl relative overflow-hidden transition-all duration-300 group shadow-xl"
-            >
-              <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent" />
-              
-              <div className="flex items-center gap-2.5 mb-4 text-indigo-400 font-bold text-sm uppercase tracking-widest">
-                <Terminal className="w-5 h-5" />
-                <span>Expertise • ความเชี่ยวชาญ</span>
-              </div>
-              <p className="text-sm md:text-base text-slate-300 leading-relaxed">
-                Windows Optimization &bull; System Performance Tuning &bull; Gaming Latency Optimization &bull; Automation Scripting &bull; Modern UI/UX Design &bull; GitHub Source Management &bull; AI Automation Pipelines
-              </p>
-            </motion.div>
+      <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+        ผลงานการพัฒนา
+      </h2>
+    </div>
 
-            {/* Goal Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="p-6 md:p-8 bg-white/5 backdrop-blur-2xl border border-white/10 hover:border-white/20 rounded-3xl relative overflow-hidden transition-all duration-300 group shadow-xl"
-            >
-              <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
-              
-              <div className="flex items-center gap-2.5 mb-4 text-purple-400 font-bold text-sm uppercase tracking-widest">
-                <Sparkles className="w-5 h-5" />
-                <span>Goal • เป้าหมาย</span>
-              </div>
-              <p className="text-sm md:text-base text-slate-300 leading-relaxed">
-                มุ่งมั่นพัฒนาซอฟต์แวร์และระบบ Automation อัจฉริยะที่ช่วยเพิ่มประสิทธิภาพสูงสุด ปลดล็อกขีดจำกัดของเครื่องพีซี พร้อมทั้งส่งมอบผลิตภัณฑ์ที่มีเสถียรภาพและดีไซน์ที่ทันสมัย เรียบง่าย น่าใช้งานจริง
-              </p>
-            </motion.div>
+    {/* Cards Portfolio Grid */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {projects.map((proj, idx) => (
+        <motion.div
+          key={proj.id}
+          initial={{ opacity: 0, y: 35 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: idx * 0.1 }}
+          whileHover={{ y: -8 }}
+          className="
+            flex flex-col
+            bg-white/5
+            backdrop-blur-2xl
+            border border-white/10
+            hover:border-white/20
+            rounded-3xl
+            overflow-hidden
+            transition-all duration-300
+            relative group
+            shadow-xl
+          "
+        >
 
-          </div>
-        </div>
-      </section>
+          {/* ═══════════════════════════════════
+              PROJECT IMAGE
+          ═══════════════════════════════════ */}
+          <div className="relative aspect-video overflow-hidden bg-white/5 p-3">
+            <div className="w-full h-full rounded-lg overflow-hidden relative">
 
-      {/* ════════════════════════════════════
-          SECTION 3: SKILLS
-      ════════════════════════════════════ */}
-      <section id="skills" className="py-24 relative z-10">
-        <div className="max-w-7xl mx-auto px-5 md:px-8">
-          
-          {/* Header Section */}
-          <div className="text-center mb-16">
-            <span className="inline-block mb-3 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-widest bg-blue-500/10 border border-blue-500/20 text-blue-400">
-              Expertise
-            </span>
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-              ทักษะและความสามารถ
-            </h2>
-          </div>
+              <SafeImage
+                src={proj.imageUrl}
+                alt={proj.name}
+                className="
+                  w-full h-full object-cover
+                  transition-transform duration-500
+                  group-hover:scale-105
+                "
+                fallbackType={proj.id as any}
+                projectName={proj.name}
+              />
 
-          <ConstellationMap />
-
-        </div>
-      </section>
-
-      {/* ════════════════════════════════════
-          SECTION 4: PORTFOLIO (PRODUCTS)
-      ════════════════════════════════════ */}
-      <section id="portfolio" className="py-24 relative z-10">
-        <div className="max-w-7xl mx-auto px-5 md:px-8">
-          
-          {/* Header Section */}
-          <div className="text-center mb-16">
-            <span className="inline-block mb-3 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-widest bg-blue-500/10 border border-blue-500/20 text-blue-400">
-              My Products
-            </span>
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-              ผลงานการพัฒนา
-            </h2>
-          </div>
-
-          {/* Cards Portfolio Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {projects.map((proj, idx) => (
-              <motion.div
-                key={proj.id}
-                initial={{ opacity: 0, y: 35 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: idx * 0.1 }}
-                whileHover={{ y: -8 }}
-                className="flex flex-col bg-white/5 backdrop-blur-2xl border border-white/10 hover:border-white/20 rounded-3xl overflow-hidden transition-all duration-300 relative group shadow-xl"
+              {/* ═══════════════════════════════
+                  HOVER OVERLAY
+              ═══════════════════════════════ */}
+              <div
+                className="
+                  absolute inset-0
+                  bg-black/60
+                  opacity-0
+                  group-hover:opacity-100
+                  transition-opacity duration-300
+                  flex items-center justify-center
+                "
               >
-                {/* Project Image Panel */}
-                <div className="relative aspect-video overflow-hidden bg-white/5 p-3">
-                  <div className="w-full h-full rounded-lg overflow-hidden relative">
-                    <SafeImage
-                      src={proj.imageUrl}
-                      alt={proj.name}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      fallbackType={proj.id as any}
-                      projectName={proj.name}
-                    />
-                    
-                    {/* Dark Hover overlay screen */}
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                      <a
-                        href={proj.githubUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600 rounded-full flex items-center gap-1.5 shadow-lg transform translate-y-3 group-hover:translate-y-0 transition-all duration-300"
-                      >
-                        {proj.githubUrl.includes("github.io") ? (
-                          <>
-                            <ExternalLink className="w-4 h-4" />
-                            <span>Launch Live App</span>
-                          </>
-                        ) : (
-                          <>
-                            <Github className="w-4 h-4" />
-                            <span>View on GitHub</span>
-                          </>
-                        )}
-                      </a>
-                    </div>
-                  </div>
-                </div>
+                <a
+                  href={proj.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="
+                    px-4 py-2
+                    text-xs font-bold text-white
+                    bg-gradient-to-r from-blue-600 to-indigo-600
+                    hover:from-indigo-600 hover:to-blue-600
+                    rounded-full
+                    inline-flex items-center
+                    gap-1.5
+                    shadow-lg
+                    whitespace-nowrap
+                    transform translate-y-3
+                    group-hover:translate-y-0
+                    transition-all duration-300
+                  "
+                >
+                  <Github className="w-4 h-4 shrink-0" />
+                  <span className="whitespace-nowrap">
+                    View on GitHub
+                  </span>
+                </a>
+              </div>
 
-                {/* Project Body */}
-                <div className="p-6 flex-1 flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-xl font-bold text-white tracking-wide mb-2 group-hover:text-blue-400 transition-colors">
-                      {proj.name}
-                    </h3>
-                    <p className="text-xs md:text-sm text-slate-300 leading-relaxed mb-4">
-                      {proj.description}
-                    </p>
-                  </div>
-
-                  {/* Badges and Redirect footer links */}
-                  <div>
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      {proj.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-blue-400"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-
-                    <a
-                      href={proj.githubUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs font-bold text-blue-400 hover:text-blue-300 hover:translate-x-1 transition-all duration-300"
-                    >
-                      <span>{proj.githubUrl.includes("github.io") ? "Launch Live App" : "Explore Repository"}</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </a>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+            </div>
           </div>
 
-        </div>
-      </section>
+          {/* ═══════════════════════════════════
+              PROJECT BODY
+          ═══════════════════════════════════ */}
+          <div className="p-6 flex-1 flex flex-col justify-between">
+
+            {/* Project Information */}
+            <div>
+
+              <h3
+                className="
+                  text-xl font-bold
+                  text-white
+                  tracking-wide
+                  mb-2
+                  group-hover:text-blue-400
+                  transition-colors
+                "
+              >
+                {proj.name}
+              </h3>
+
+              <p
+                className="
+                  text-xs md:text-sm
+                  text-slate-300
+                  leading-relaxed
+                  mb-4
+                "
+              >
+                {proj.description}
+              </p>
+
+            </div>
+
+            {/* ═══════════════════════════════
+                TAGS + GITHUB LINK
+            ═══════════════════════════════ */}
+            <div>
+
+              {/* Tags */}
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                {proj.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="
+                      px-2 py-0.5
+                      rounded
+                      text-[10px]
+                      font-mono font-bold
+                      bg-white/5
+                      border border-white/10
+                      text-blue-400
+                    "
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+
+              {/* GitHub Link */}
+              <a
+                href={proj.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="
+                  inline-flex
+                  items-center
+                  gap-1
+                  text-xs
+                  font-bold
+                  text-blue-400
+                  hover:text-blue-300
+                  hover:translate-x-1
+                  transition-all duration-300
+                  whitespace-nowrap
+                "
+              >
+                <Github className="w-3.5 h-3.5 shrink-0" />
+
+                <span className="whitespace-nowrap">
+                  View on GitHub
+                </span>
+
+                <ChevronRight className="w-3.5 h-3.5 shrink-0" />
+              </a>
+
+            </div>
+
+          </div>
+        </motion.div>
+      ))}
+    </div>
+
+  </div>
+</section>
 
       {/* ════════════════════════════════════
           SECTION 5: CONTACT (COMING SOON)
