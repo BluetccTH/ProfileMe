@@ -532,12 +532,14 @@ export default function App() {
 
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
-                <button
-                  onClick={() => scrollToSection("portfolio")}
+                <a
+                  href="https://bluetccth.github.io/Lily---AI-Anime-Companion/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600 text-white font-semibold rounded-full flex items-center gap-2 shadow-lg shadow-blue-500/20 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
                 >
-                  <span>🚀 Explore Products</span>
-                </button>
+                  <span>🚀 Lily AI</span>
+                </a>
                 <a
                   href="https://discord.gg/WTYgx6CPeh"
                   target="_blank"
