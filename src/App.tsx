@@ -341,17 +341,18 @@ export default function App() {
             : "bg-transparent py-5 border-transparent"
         }`}
       >
-        <div className="w-full px-5 md:px-12 lg:px-16 flex justify-between items-center">
+        <div className="w-full px-5 md:px-12 lg:px-16 flex justify-between items-center relative">
+          {/* Brand Logo (Left) */}
           <motion.button
             onClick={() => scrollToSection("home")}
-            className="text-lg md:text-xl font-bold tracking-wider bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent hover:scale-105 transition-transform cursor-pointer uppercase flex items-center gap-2"
+            className="text-lg md:text-xl font-bold tracking-wider bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent hover:scale-105 transition-transform cursor-pointer uppercase flex items-center gap-2.5 shrink-0 z-10"
           >
-            <img src="favicon.png" alt="Logo" className="w-8 h-8 object-contain rounded-lg" />
-            BLUE.TCC
+            <img src="favicon.png" alt="Logo" className="w-8 h-8 object-contain rounded-lg shadow-sm" />
+            <span>BLUE.TCC</span>
           </motion.button>
 
-          {/* Desktop Navigation Links */}
-          <ul className="hidden md:flex items-center gap-8">
+          {/* Desktop Navigation Links (Center) */}
+          <ul className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-8 z-0">
             {["home", "about", "skills", "portfolio", "contact"].map((section) => (
               <li key={section}>
                 <button
@@ -377,22 +378,23 @@ export default function App() {
             ))}
           </ul>
 
-          {/* Support CTA Button */}
-          <div className="hidden md:flex items-center">
+          {/* Support CTA Button (Right) */}
+          <div className="hidden md:flex items-center z-10">
             <a
               href="https://ezdn.app/blue_tcc"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-6 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-xs font-semibold uppercase tracking-widest text-slate-100 backdrop-blur-sm transition-all"
+              className="px-5 py-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 hover:from-blue-600/40 hover:to-purple-600/40 border border-white/20 hover:border-cyan-400/50 rounded-full text-xs font-semibold uppercase tracking-widest text-slate-100 backdrop-blur-sm transition-all shadow-sm flex items-center gap-1.5"
             >
-              💸 Support
+              <span>💸</span>
+              <span>Support</span>
             </a>
           </div>
 
           {/* Hamburger Menu Icon (Mobile) */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="flex md:hidden p-2 rounded-lg bg-white/5 border border-white/10 text-white cursor-pointer hover:bg-white/10 transition-colors"
+            className="flex md:hidden p-2 rounded-lg bg-white/5 border border-white/10 text-white cursor-pointer hover:bg-white/10 transition-colors z-10"
             aria-label="Toggle menu"
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
