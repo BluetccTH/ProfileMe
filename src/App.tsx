@@ -144,6 +144,14 @@ export default function App() {
 
   const projects: Project[] = [
     {
+      id: "lilyai",
+      name: "Lily - AI",
+      description: "An interactive celestial Live2D AI Anime companion featuring real-time eye and cursor tracking, high-fidelity voice synthesis, conversational intelligence powered by Google Gemini, emotional facial expressions, and responsive physics.",
+      imageUrl: "Lily - AI.jpg",
+      githubUrl: "https://bluetccth.github.io/Lily---AI-Anime-Companion/",
+      tags: ["AI", "CHAT BOT", "API", "LIVE2D SYNC"],
+    },
+    {
       id: "boost",
       name: "Boost PC",
       description: "ซอฟต์แวร์เพิ่มประสิทธิภาพระบบปฏิบัติการ Windows ให้ตอบสนองรวดเร็วยิ่งขึ้น ลดภาระ CPU/RAM ส่วนเกิน เพื่อเฟรมเรตและเสถียรภาพสูงสุดในการใช้งานทั่วไปและเล่นเกม",
