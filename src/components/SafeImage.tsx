@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { User, Cpu, Globe, Terminal, LucideIcon } from "lucide-react";
+import { User, Cpu, Globe, Terminal, Bot, LucideIcon } from "lucide-react";
 
 interface SafeImageProps {
   src: string;
   alt: string;
   className?: string;
-  fallbackType?: "profile" | "project" | "boost" | "netboot" | "overlay";
+  fallbackType?: "profile" | "project" | "boost" | "netboot" | "overlay" | "lilyai";
   projectName?: string;
 }
 
@@ -15,6 +15,7 @@ const icons: Record<string, LucideIcon> = {
   boost: Cpu,
   netboot: Terminal,
   overlay: Cpu,
+  lilyai: Bot,
 };
 
 export const SafeImage: React.FC<SafeImageProps> = ({
@@ -45,6 +46,7 @@ export const SafeImage: React.FC<SafeImageProps> = ({
     if (fallbackType === "boost") gradient = "from-[#ff512f] to-[#dd2476]";
     if (fallbackType === "netboot") gradient = "from-[#00c6ff] to-[#0072ff]";
     if (fallbackType === "overlay") gradient = "from-[#f472b6] to-[#6c63ff]";
+    if (fallbackType === "lilyai") gradient = "from-[#ec4899] via-[#8b5cf6] to-[#3b82f6]";
     if (fallbackType === "profile") gradient = "from-[#6c63ff] via-[#a78bfa] to-[#22d3ee]";
 
     return (
