@@ -1,5 +1,12 @@
 # Blue.tcc Portfolio (ProfileMe) 🌌
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-6c63ff?style=for-the-badge&logo=github)](https://bluetccth.github.io/ProfileMe/)
+[![React](https://img.shields.io/badge/React-19.0-61dafb?style=for-the-badge&logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-6.2-646cff?style=for-the-badge&logo=vite)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38bdf8?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
+[![Gemini](https://img.shields.io/badge/Google%20Gemini-Flash-4285f4?style=for-the-badge&logo=google)](https://ai.google.dev/)
+
 A modern, high-performance cyber/futuristic portfolio website for **Blue.tcc (Chisanupong Renuhom)** featuring an interactive **Live2D Cubism 4 Model Avatar**, dynamic skill matrix, project showcases, audio/visual effects, and responsive cyber design.
 
 🌐 **Live Demo:** [https://bluetccth.github.io/ProfileMe/](https://bluetccth.github.io/ProfileMe/)
