@@ -11,9 +11,10 @@ A modern, high-performance cyber/futuristic portfolio website for **Blue.tcc (Ch
 - 🎭 **Interactive Live2D Avatar**: Real-time cursor tracking, motion gestures, expression switching, and physics simulation using PixiJS & Cubism 4 SDK.
 - ⚡ **Futuristic Cyber UI**: Glassmorphism aesthetic, neon gradients, ambient background particle video, and responsive layout across desktop and mobile.
 - 🚀 **Featured Projects & Products Showcase**:
-  - **NetBoot-X**: Cloud OS booting & network PXE solutions.
+  - **Lily - AI**: Interactive celestial Live2D AI Anime companion with real-time eye/cursor tracking, voice synthesis & Google Gemini conversational intelligence.
   - **BoostPC**: Windows latency optimization & performance tuning suite.
-  - **Overlay-PC / Lily AI**: AI companions & streaming overlays.
+  - **NetBoot-X**: Cloud OS booting & network PXE solutions.
+  - **Overlay-PC**: Real-time FPS, CPU, GPU, RAM hardware monitoring overlay.
 - 🛠️ **Interactive Skill Radar & Matrix**: Visualized proficiency in Full-Stack Web, DevOps, Server Optimization, and Live2D rigging.
 - 📱 **Mobile & Desktop Responsive**: Custom sticky glass navigation bar, full-screen mobile menu drawer, and smooth section scrolling.
 - 🔗 **Social Links & Support Integration**: Direct links to Discord community, Facebook, GitHub, and EzDn donation/support.
