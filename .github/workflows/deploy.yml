@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -14,9 +13,6 @@ permissions:
 concurrency:
   group: "pages"
   cancel-in-progress: false
-
-env:
-  NODE_VERSION: '24'
 
 jobs:
   deploy:
@@ -28,28 +24,30 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          package-manager-cache: false
-
-      - name: Generate package lock
-        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          node-version: 22
+          cache: npm
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts --no-audit --no-fund
+        run: npm ci
 
-      - name: Check legacy Live2D base
+      # ตรวจ export ก่อน build
+      - name: Check Live2DAvatar export
         run: |
-          echo "=== Live2DAvatar legacy base ==="
-          grep -n "Live2DLoader\|pixi-live2d-display/cubism4\|autoInteract\|ParamAngleX\|ParamBiaoQ1" src/components/Live2DAvatar.tsx || true
+          echo "=== Live2DAvatar.tsx ==="
+          grep -n "Live2DAvatar" src/components/Live2DAvatar.tsx || true
+
+          echo "=== App import ==="
+          grep -n "Live2DAvatar" src/App.tsx || true
 
       - name: Build
         run: npm run build
 
+      # ตรวจไฟล์ Live2D หลัง build
       - name: Verify Live2D assets
         run: |
           echo "=== Live2D files in dist ==="
@@ -59,7 +57,8 @@ jobs:
             -o -name "*.png" \
             -o -name "*.physics3.json" \
           \) | sort
-          echo "=== MOC/texture sizes ==="
+
+          echo "=== File sizes ==="
           find dist -type f \( \
             -name "*.moc3" \
             -o -name "*.png" \
@@ -69,10 +68,10 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@v4
