@@ -386,7 +386,7 @@ export default function App() {
             ))}
           </ul>
 
-          {/* Support CTA Button (Right) */}
+          {/* Support CTA Button (Desktop Right) */}
           <div className="hidden md:flex items-center z-10">
             <a
               href="https://ezdn.app/blue_tcc"
@@ -395,18 +395,29 @@ export default function App() {
               className="px-5 py-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 hover:from-blue-600/40 hover:to-purple-600/40 border border-white/20 hover:border-cyan-400/50 rounded-full text-xs font-semibold uppercase tracking-widest text-slate-100 backdrop-blur-sm transition-all shadow-sm flex items-center gap-1.5"
             >
               <span>💸</span>
-              <span>Support</span>
+              <span>Support Dev</span>
             </a>
           </div>
 
-          {/* Hamburger Menu Icon (Mobile) */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="flex md:hidden p-2 rounded-lg bg-white/5 border border-white/10 text-white cursor-pointer hover:bg-white/10 transition-colors z-10"
-            aria-label="Toggle menu"
-          >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          {/* Mobile Right Action Buttons */}
+          <div className="flex md:hidden items-center gap-2.5 z-10">
+            <a
+              href="https://ezdn.app/blue_tcc"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3.5 py-1.5 bg-gradient-to-r from-blue-600/30 to-purple-600/30 hover:from-blue-600/50 hover:to-purple-600/50 border border-white/20 rounded-full text-xs font-semibold text-slate-100 backdrop-blur-sm transition-all shadow-sm flex items-center gap-1"
+            >
+              <span>💸</span>
+              <span>Support Dev</span>
+            </a>
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-lg bg-white/5 border border-white/10 text-white cursor-pointer hover:bg-white/10 transition-colors"
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -417,13 +428,14 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-[#030308]/95 backdrop-blur-2xl z-[999] flex flex-col items-center justify-center"
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 bg-[#030308]/95 backdrop-blur-2xl z-[999] flex flex-col items-center justify-center p-6 overflow-y-auto"
           >
             <div className="absolute top-5 right-5">
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="p-3 rounded-xl bg-white/5 border border-white/10 text-white cursor-pointer"
+                className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-white cursor-pointer hover:bg-white/10 transition-colors"
+                aria-label="Close menu"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -434,11 +446,19 @@ export default function App() {
               animate="open"
               exit="closed"
               variants={{
-                open: { transition: { staggerChildren: 0.1 } },
-                closed: { transition: { staggerChildren: 0.05, staggerDirection: -1 } },
+                open: { transition: { staggerChildren: 0.08 } },
+                closed: { transition: { staggerChildren: 0.04, staggerDirection: -1 } },
               }}
-              className="flex flex-col items-center gap-6 w-full max-w-xs"
+              className="flex flex-col items-center gap-3.5 w-full max-w-xs my-auto"
             >
+              {/* Drawer Brand Header */}
+              <div className="flex items-center gap-2 mb-2">
+                <img src="favicon.png" alt="Logo" className="w-8 h-8 object-contain rounded-lg" />
+                <span className="text-xl font-bold bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                  BLUE.TCC
+                </span>
+              </div>
+
               {[
                 { id: "home", label: "หน้าแรก" },
                 { id: "about", label: "เกี่ยวกับฉัน" },
@@ -450,31 +470,21 @@ export default function App() {
                   key={item.id}
                   variants={{
                     open: { opacity: 1, y: 0, scale: 1 },
-                    closed: { opacity: 0, y: 30, scale: 0.9 },
+                    closed: { opacity: 0, y: 20, scale: 0.95 },
                   }}
-                  onClick={() => scrollToSection(item.id)}
-                  className={`w-full py-4 px-6 text-center text-lg font-bold border border-white/5 rounded-2xl transition-all ${
+                  onClick={() => {
+                    scrollToSection(item.id);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full py-3 px-5 text-center text-base font-semibold border rounded-xl transition-all cursor-pointer ${
                     activeSection === item.id
-                      ? "bg-gradient-to-r from-[#6c63ff]/20 to-[#22d3ee]/20 border-[#6c63ff]/30 text-white shadow-[0_0_20px_rgba(108,99,255,0.1)]"
-                      : "bg-white/[0.02] text-[#8a87b0] hover:text-white hover:bg-white/[0.05]"
+                      ? "bg-gradient-to-r from-blue-600/30 to-purple-600/30 border-blue-400/40 text-white shadow-[0_0_20px_rgba(99,102,241,0.25)]"
+                      : "bg-white/[0.03] border-white/10 text-slate-300 hover:text-white hover:bg-white/[0.08]"
                   }`}
                 >
                   {item.label}
                 </motion.button>
               ))}
-
-              <motion.a
-                variants={{
-                  open: { opacity: 1, y: 0 },
-                  closed: { opacity: 0, y: 20 },
-                }}
-                href="https://ezdn.app/blue_tcc"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full mt-4 py-4 px-6 text-center text-lg font-bold text-white bg-gradient-to-r from-[#6c63ff] to-[#22d3ee] rounded-2xl shadow-[0_0_25px_rgba(108,99,255,0.3)]"
-              >
-                💸 Support Dev
-              </motion.a>
             </motion.div>
           </motion.div>
         )}
@@ -822,7 +832,7 @@ export default function App() {
           </div>
 
           {/* Cards Portfolio Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {projects.map((proj, idx) => (
               <motion.div
                 key={proj.id}
@@ -850,10 +860,19 @@ export default function App() {
                         href={proj.githubUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-full flex items-center gap-1.5 shadow-lg transform translate-y-3 group-hover:translate-y-0 transition-all duration-300"
+                        className="px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-600 rounded-full flex items-center gap-1.5 shadow-lg transform translate-y-3 group-hover:translate-y-0 transition-all duration-300"
                       >
-                        <Github className="w-4 h-4" />
-                        <span>View on GitHub</span>
+                        {proj.githubUrl.includes("github.io") ? (
+                          <>
+                            <ExternalLink className="w-4 h-4" />
+                            <span>Launch Live App</span>
+                          </>
+                        ) : (
+                          <>
+                            <Github className="w-4 h-4" />
+                            <span>View on GitHub</span>
+                          </>
+                        )}
                       </a>
                     </div>
                   </div>
@@ -889,7 +908,7 @@ export default function App() {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-xs font-bold text-blue-400 hover:text-blue-300 hover:translate-x-1 transition-all duration-300"
                     >
-                      <span>Explore Repository</span>
+                      <span>{proj.githubUrl.includes("github.io") ? "Launch Live App" : "Explore Repository"}</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </a>
                   </div>
