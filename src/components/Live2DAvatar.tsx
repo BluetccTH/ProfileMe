@@ -155,6 +155,19 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
         const { Live2DLoader, Live2DModel } = await import("pixi-live2d-display/cubism4");
         Live2DModel.registerTicker(PIXI.Ticker);
 
+        // Safe guard PIXI v7 interaction compatibility to prevent 'manager.on is not a function' errors
+        if (Live2DModel.prototype) {
+          (Live2DModel.prototype as any).registerInteraction = function (manager: any) {
+            if (manager !== (this as any).interactionManager) {
+              (this as any).unregisterInteraction();
+              if ((this as any)._autoInteract && manager && typeof manager.on === "function") {
+                (this as any).interactionManager = manager;
+                manager.on("pointermove", (this as any).onPointerMove, this);
+              }
+            }
+          };
+        }
+
         // Modern fetch-based loader middleware to bypass browser XHR issues & correctly resolve relative assets
         Live2DLoader.middlewares = [
           async (context: any, next: any) => {
@@ -163,9 +176,20 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
               : context.url;
             const targetUrl = resolveAssetUrl(rawUrl);
 
+            // Handle optional pose files or missing pose files gracefully
+            if (!context.url || context.url === "Pose" || context.url === "pose") {
+              context.result = null;
+              return;
+            }
+
             try {
-              const res = await fetch(targetUrl);
+              const res = await fetch(targetUrl, { cache: "no-cache" });
               if (!res.ok) {
+                // If optional pose or auxiliary file is not found, don't crash
+                if (targetUrl.toLowerCase().includes("pose")) {
+                  context.result = null;
+                  return;
+                }
                 throw new Error(`Failed to load ${targetUrl} (Status ${res.status})`);
               }
               if (context.type === "json") {
@@ -188,6 +212,10 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
                 context.result = await res.text();
               }
             } catch (fetchErr: any) {
+              if (targetUrl.toLowerCase().includes("pose")) {
+                context.result = null;
+                return;
+              }
               console.error("[Live2D Loader] Error fetching resource:", targetUrl, fetchErr);
               throw fetchErr;
             }
@@ -212,11 +240,13 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
         });
         appRef.current = pixiApp;
 
-        // Load Model with resolved URL
+        // Load Model with resolved URL (using modern options to avoid deprecation warnings)
         const modelUrl = resolveAssetUrl("live2d/MassageSeacubus_rei.model3.json");
         const model = await Live2DModel.from(modelUrl, {
           autoInteract: false,
-        });
+          autoHitTest: false,
+          autoFocus: false,
+        } as any);
 
         if (isDestroyedRef.current) {
           model.destroy();
@@ -224,6 +254,7 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
           return;
         }
 
+        model.autoInteract = false;
         modelRef.current = model;
 
         // Position and scale model to show half-body / upper body view
