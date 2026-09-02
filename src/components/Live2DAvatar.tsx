@@ -246,6 +246,7 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
           autoInteract: false,
           autoHitTest: false,
           autoFocus: false,
+          crossOrigin: "anonymous",
         } as any);
 
         if (isDestroyedRef.current) {
