@@ -32,10 +32,7 @@ jobs:
           node-version: 22
           cache: npm
 
-      # package.json and package-lock.json have drifted while the Live2D
-      # dependency stack is being repaired. Use npm install here so CI
-      # resolves the declared dependency graph instead of failing on npm ci's
-      # strict lockfile consistency check.
+      # Use npm install with --no-audit --no-fund for flexible dependency resolution
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
@@ -49,7 +46,7 @@ jobs:
           grep -n "Live2DAvatar" src/App.tsx || true
 
       - name: Build
-        run: npm run build
+        run: npx vite build
 
       # ตรวจไฟล์ Live2D หลัง build
       - name: Verify Live2D assets
