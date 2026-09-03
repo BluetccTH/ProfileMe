@@ -152,11 +152,24 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
 
         // Set global PIXI before importing cubism4
         (window as any).PIXI = PIXI;
+
+        // Polyfill isInteractive for PixiJS v7 event system compatibility
+        if (PIXI.DisplayObject && typeof (PIXI.DisplayObject.prototype as any).isInteractive !== "function") {
+          (PIXI.DisplayObject.prototype as any).isInteractive = function () {
+            return false;
+          };
+        }
+
         const { Live2DLoader, Live2DModel } = await import("pixi-live2d-display/cubism4");
         Live2DModel.registerTicker(PIXI.Ticker);
 
         // Safe guard PIXI v7 interaction compatibility to prevent 'manager.on is not a function' errors
         if (Live2DModel.prototype) {
+          if (typeof (Live2DModel.prototype as any).isInteractive !== "function") {
+            (Live2DModel.prototype as any).isInteractive = function () {
+              return false;
+            };
+          }
           (Live2DModel.prototype as any).registerInteraction = function (manager: any) {
             if (manager !== (this as any).interactionManager) {
               (this as any).unregisterInteraction();
@@ -256,7 +269,17 @@ export const Live2DAvatar: React.FC<Live2DAvatarProps> = ({
         }
 
         model.autoInteract = false;
+        (model as any).interactive = false;
+        (model as any).interactiveChildren = false;
+        (model as any).eventMode = "none";
+        (model as any).isInteractive = () => false;
         modelRef.current = model;
+
+        if (pixiApp.stage) {
+          (pixiApp.stage as any).eventMode = "none";
+          (pixiApp.stage as any).interactive = false;
+          (pixiApp.stage as any).interactiveChildren = false;
+        }
 
         // Position and scale model to show half-body / upper body view
         const baseScale = Math.min(appWidth / model.width, appHeight / model.height) * 3.3;
