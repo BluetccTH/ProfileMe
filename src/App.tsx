@@ -713,10 +713,112 @@ export default function App() {
         </div>
       </section>
 
-{/* ════════════════════════════════════
-    SECTION 4: PORTFOLIO (PRODUCTS)
-════════════════════════════════════ */}
-<section id="portfolio" className="py-24 relative z-10">
+      {/* ════════════════════════════════════
+          SECTION 2: ABOUT
+      ════════════════════════════════════ */}
+      <section id="about" className="py-24 relative z-10">
+        <div className="max-w-7xl mx-auto px-5 md:px-8">
+          
+          {/* Header Section */}
+          <div className="text-center mb-16">
+            <span className="inline-block mb-3 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-widest bg-blue-500/10 border border-blue-500/20 text-blue-400">
+              About me
+            </span>
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+              เกี่ยวกับฉัน
+            </h2>
+          </div>
+
+          {/* Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Overview - Full Width Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="md:col-span-2 p-6 md:p-8 bg-white/5 backdrop-blur-2xl border border-white/10 hover:border-white/20 rounded-3xl relative overflow-hidden transition-all duration-300 group shadow-xl"
+            >
+              {/* Card visual accent border */}
+              <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-blue-500/30 to-transparent" />
+              
+              <div className="flex items-center gap-2.5 mb-4 text-blue-400 font-bold text-sm uppercase tracking-widest">
+                <User className="w-5 h-5 text-blue-400" />
+                <span>Overview • ข้อมูลทั่วไป</span>
+              </div>
+              <p className="text-sm md:text-base text-slate-300 leading-relaxed">
+                ผมเป็นนักพัฒนาซอฟต์แวร์ที่มุ่งเน้นด้าน <strong className="text-white font-semibold">Windows Optimization, Automation, AI</strong> และ <strong className="text-white font-semibold">Performance Engineering</strong> มีประสบการณ์ในการพัฒนาเครื่องมือสำหรับเพิ่มประสิทธิภาพของระบบปฏิบัติการ ปรับแต่ง Windows ให้ตอบสนองรวดเร็วขึ้น ลดภาระของระบบ และช่วยยกระดับประสบการณ์การเล่นเกมให้ลื่นไหลมากขึ้น รวมถึงการพัฒนา <strong className="text-white font-semibold">Automation Tools</strong> และ <strong className="text-white font-semibold">Utility Software</strong> โดยให้ความสำคัญกับ <strong className="text-white font-semibold">Performance, Clean Design</strong> และ <strong className="text-white font-semibold">Real-world Usability</strong>
+              </p>
+            </motion.div>
+
+            {/* Expertise Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="p-6 md:p-8 bg-white/5 backdrop-blur-2xl border border-white/10 hover:border-white/20 rounded-3xl relative overflow-hidden transition-all duration-300 group shadow-xl"
+            >
+              <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent" />
+              
+              <div className="flex items-center gap-2.5 mb-4 text-indigo-400 font-bold text-sm uppercase tracking-widest">
+                <Terminal className="w-5 h-5" />
+                <span>Expertise • ความเชี่ยวชาญ</span>
+              </div>
+              <p className="text-sm md:text-base text-slate-300 leading-relaxed">
+                Windows Optimization &bull; System Performance Tuning &bull; Gaming Latency Optimization &bull; Automation Scripting &bull; Modern UI/UX Design &bull; GitHub Source Management &bull; AI Automation Pipelines
+              </p>
+            </motion.div>
+
+            {/* Goal Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="p-6 md:p-8 bg-white/5 backdrop-blur-2xl border border-white/10 hover:border-white/20 rounded-3xl relative overflow-hidden transition-all duration-300 group shadow-xl"
+            >
+              <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-purple-500/30 to-transparent" />
+              
+              <div className="flex items-center gap-2.5 mb-4 text-purple-400 font-bold text-sm uppercase tracking-widest">
+                <Sparkles className="w-5 h-5" />
+                <span>Goal • เป้าหมาย</span>
+              </div>
+              <p className="text-sm md:text-base text-slate-300 leading-relaxed">
+                มุ่งมั่นพัฒนาซอฟต์แวร์และระบบ Automation อัจฉริยะที่ช่วยเพิ่มประสิทธิภาพสูงสุด ปลดล็อกขีดจำกัดของเครื่องพีซี พร้อมทั้งส่งมอบผลิตภัณฑ์ที่มีเสถียรภาพและดีไซน์ที่ทันสมัย เรียบง่าย น่าใช้งานจริง
+              </p>
+            </motion.div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════
+          SECTION 3: SKILLS
+      ════════════════════════════════════ */}
+      <section id="skills" className="py-24 relative z-10">
+        <div className="max-w-7xl mx-auto px-5 md:px-8">
+          
+          {/* Header Section */}
+          <div className="text-center mb-16">
+            <span className="inline-block mb-3 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-widest bg-blue-500/10 border border-blue-500/20 text-blue-400">
+              Expertise
+            </span>
+            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+              ทักษะและความสามารถ
+            </h2>
+          </div>
+
+          <ConstellationMap />
+
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════
+          SECTION 4: PORTFOLIO (PRODUCTS)
+      ════════════════════════════════════ */}
+      <section id="portfolio" className="py-24 relative z-10">
   <div className="max-w-7xl mx-auto px-5 md:px-8">
 
     {/* Header Section */}
